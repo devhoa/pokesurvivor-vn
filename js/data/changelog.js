@@ -6,6 +6,10 @@
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-10-28', title: ['Más vegetación en el mapa', 'More vegetation on the map'], chg: [
+    ['Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.',
+     'More trees and tall grass now appear across the map without crowding paths.']
+  ]},
   { d: '2026-10-27', title: ['El juego ya está en vietnamita', 'Vietnamese is now available in the game'], new: [
     ['El juego ya está disponible en vietnamita. Elígelo en Ajustes > Gráficos > Idioma.',
      'The game is now available in Vietnamese. Choose it in Settings > Graphics > Language.']

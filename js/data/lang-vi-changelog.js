@@ -1,4 +1,6 @@
 G.I18n.add({
+  'Más vegetación en el mapa': 'Bản đồ có thêm nhiều cây cối',
+  'Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.': 'Trên bản đồ giờ có thêm nhiều cây và cỏ cao, nhưng vẫn giữ lối đi thông thoáng.',
   'El juego ya está en vietnamita': 'Trò chơi đã có tiếng Việt',
   'El juego ya está disponible en vietnamita. Elígelo en Ajustes > Gráficos > Idioma.': 'Trò chơi hiện đã có tiếng Việt. Chọn ngôn ngữ này tại Cài đặt > Đồ họa > Ngôn ngữ.',
   'Halloween se acerca': 'Halloween sắp đến',

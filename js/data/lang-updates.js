@@ -8,6 +8,8 @@
 (() => {
   const languages = ['fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'];
   const rows = [
+    ["Más vegetación en el mapa", "Plus de végétation sur la carte", "Più vegetazione sulla mappa", "Mais vegetação no mapa", "地图植被增加", "地圖植被增加"],
+    ["Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.", "Plus d’arbres et d’herbes hautes apparaissent désormais sur la carte, sans encombrer les chemins.", "Ora sulla mappa compaiono più alberi ed erba alta, senza riempire i sentieri.", "Agora há mais árvores e grama alta pelo mapa, sem bloquear os caminhos.", "地图上现在会出现更多树木和高草，同时不会堵塞道路。", "地圖上現在會出現更多樹木和高草，同時不會堵塞道路。"],
     ["Tipo", "Type", "Tipo", "Tipo", "属性", "屬性"],
     ["Nuevo", "Nouveau", "Novità", "Novidades", "新增", "新增"],
     ["Cambios", "Modifications", "Modifiche", "Alterações", "变更", "變更"],
