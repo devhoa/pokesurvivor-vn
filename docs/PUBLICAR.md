@@ -1,46 +1,27 @@
 # Publicar el juego gratis en GitHub Pages
 
 El juego es una web estática: GitHub Pages la sirve gratis en
-`https://jpter78.github.io/pokesurvivor/`.
+`https://devhoa.github.io/pokesurvivor-vn/`. El repositorio es
+<https://github.com/devhoa/pokesurvivor-vn>.
 
-## 1. Crear el repositorio (una vez)
+## 1. Subir cambios
 
-1. Entra en <https://github.com/new> con la cuenta **JPTER78**.
-2. Nombre: `pokesurvivor` · **Public** · **sin** README, .gitignore ni licencia
-   (ya vienen en el proyecto).
-3. Crear repositorio.
-
-## 2. Subir el proyecto
-
-Desde la carpeta del proyecto (el repositorio local ya está creado y con el
-primer commit hecho):
+Desde la carpeta del proyecto:
 
 ```
-git remote add origin https://github.com/JPTER78/pokesurvivor.git
-git push -u origin main
+git add -A
+git commit -m "Describe el cambio"
+git push origin main
 ```
 
-La primera vez se abre una ventana para iniciar sesión en GitHub.
-Son unos 75 MB, puede tardar unos minutos.
-
-## 3. Activar GitHub Pages
+## 2. Activar GitHub Pages
 
 En el repositorio: **Settings → Pages** →
 *Source*: **Deploy from a branch** → *Branch*: **main**, carpeta **/ (root)** → **Save**.
 
-En uno o dos minutos estará en <https://jpter78.github.io/pokesurvivor/>.
-
-## 4. Conectar con Firebase
-
-Si ya configuraste Firebase, añade `jpter78.github.io` a los
-**dominios autorizados** de Authentication (paso 5) y sube el
-`firebase-config.js` rellenado:
-
-```
-git add js/core/firebase-config.js
-git commit -m "Conectar con Firebase"
-git push
-```
+En uno o dos minutos estará en <https://devhoa.github.io/pokesurvivor-vn/>.
+El dominio `devhoa.github.io` ya está autorizado en Firebase Authentication
+y en las restricciones HTTP referrer de la API key.
 
 ## 5. Que salga en Google
 

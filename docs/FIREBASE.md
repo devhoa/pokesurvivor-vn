@@ -9,9 +9,10 @@ No actualizar Firebase Authentication a Identity Platform.
 
 - Authentication: Google y Email/Password habilitados.
 - Dominios autorizados: `localhost`, `127.0.0.1`, `pokesurvivor.com`,
-  `www.pokesurvivor.com` y `jpter78.github.io`.
+  `www.pokesurvivor.com`, `jpter78.github.io` y `devhoa.github.io`.
 - Restricciones HTTP referrer de la API key del navegador: deben permitir
   `http://127.0.0.1:8000/*`, `https://jpter78.github.io/*`,
+  `https://devhoa.github.io/*`,
   `https://pokesurvivor.com/*`, `https://www.pokesurvivor.com/*` y
   `https://pokesurvivor-460d6.firebaseapp.com/*`. Este último dominio es
   necesario porque Firebase Authentication lo usa durante el inicio de sesión
