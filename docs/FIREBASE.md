@@ -18,6 +18,11 @@ No actualizar Firebase Authentication a Identity Platform.
   necesario porque Firebase Authentication lo usa durante el inicio de sesión
   con Google. Si se cambia `authDomain` o el origen local, actualizar también
   esta lista en Google Cloud Console.
+- Para GitHub Pages de `trinhhoa1701-ctrl/pokesurvivor-vn`, añadir
+  `trinhhoa1701-ctrl.github.io` a los dominios autorizados y
+  `https://trinhhoa1701-ctrl.github.io/*` a las restricciones HTTP referrer.
+  Pendiente: la cuenta de Google activa no tiene acceso al proyecto para hacer
+  este cambio.
 - Cloud Firestore: base predeterminada en `eur3` (Europa).
 - Realtime Database: `europe-west1` (Bélgica).
 
