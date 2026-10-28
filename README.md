@@ -181,3 +181,4 @@ Sprites de [SpriteCollab](https://github.com/PMDCollab/SpriteCollab) bajo
 **CC BY-NC 4.0** — uso **no comercial** y con atribución; la lista de artistas
 está en [`CREDITS.md`](CREDITS.md). Pokémon es propiedad de Nintendo, Creatures
 Inc. y GAME FREAK. Proyecto de fan sin ánimo de lucro.
+# pokesurvivor-vn
