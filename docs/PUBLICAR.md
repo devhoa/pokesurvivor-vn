@@ -1,8 +1,8 @@
 # Publicar el juego gratis en GitHub Pages
 
 El juego es una web estática: GitHub Pages la sirve gratis en
-`https://trinhhoa1701-ctrl.github.io/pokesurvivor-vn/`. El repositorio es
-<https://github.com/trinhhoa1701-ctrl/pokesurvivor-vn>.
+`https://devhoa.github.io/pokesurvivor-vn/`. El repositorio es
+<https://github.com/devhoa/pokesurvivor-vn>.
 
 ## 1. Subir cambios
 
@@ -20,17 +20,17 @@ En el repositorio: **Settings → Pages** →
 *Source*: **Deploy from a branch** → *Branch*: **main**, carpeta **/ (root)** → **Save**.
 
 En uno o dos minutos estará en
-<https://trinhhoa1701-ctrl.github.io/pokesurvivor-vn/>.
-Antes de usar Google u otros inicios de sesión, añade `trinhhoa1701-ctrl.github.io`
-a los dominios autorizados de Firebase Authentication y
-`https://trinhhoa1701-ctrl.github.io/*` a las restricciones HTTP referrer de la
-API key.
+<https://devhoa.github.io/pokesurvivor-vn/>.
+Antes de usar Google u otros inicios de sesión, confirma que `devhoa.github.io`
+está en los dominios autorizados de Firebase Authentication y que
+`https://devhoa.github.io/*` está en las restricciones HTTP referrer de la API
+key. El código sólo activa Firebase en los dominios permitidos.
 
 ## 3. Que salga en Google
 
 1. <https://search.google.com/search-console> → **Añadir propiedad** →
    *Prefijo de la URL* →
-   `https://trinhhoa1701-ctrl.github.io/pokesurvivor-vn/`.
+   `https://devhoa.github.io/pokesurvivor-vn/`.
 2. Verificación: el método **Etiqueta HTML** te da una línea `<meta ...>`;
    pégala dentro de `<head>` en `index.html`, haz `git push`, y pulsa Verificar.
 3. **Inspección de URLs** → pega la dirección → **Solicitar indexación**.
