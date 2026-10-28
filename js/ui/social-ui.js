@@ -97,6 +97,19 @@
       });
       const box = $('fr-list');
       box.innerHTML = '';
+      if (G.Social.friendsError) {
+        const error = document.createElement('p');
+        error.className = 'sub';
+        error.textContent = G.I18n.f('No se pudo cargar la lista de amigos ({x}).', G.Social.friendsError);
+        const retry = document.createElement('button');
+        retry.className = 'btn small ghost';
+        retry.textContent = G.T('Reintentar');
+        retry.onclick = () => G.Social.ensureFriends().then(() => {
+          if (G.UI.isOpen('scr-friends')) render();
+        });
+        box.append(error, retry);
+        if (!list.length) return;
+      }
       if (!list.length) {
         box.innerHTML = '<p class="sub">Aún no tienes amigos añadidos. Escribe arriba el apodo de un amigo.</p>';
         return;

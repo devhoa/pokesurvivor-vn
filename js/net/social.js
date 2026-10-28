@@ -46,6 +46,7 @@ G.Social = (() => {
   let me = null;                    // { uid, name }
   let friends = new Map();          // otherUid -> { uid, name, pid, status: 'ok'|'in'|'out', online, play }
   let unFriends = null;
+  let friendsError = '';
   let listening = false, unInv = null;  // listening: ya se ha puesto en marcha (online)
   const sentInv = new Map();        // a quién invitaste: uid -> { room, at } (para retirarlo al salir)
   let room = null;                  // { id, host, isHost, members: [{ uid, name, dex, shiny }] }
@@ -177,7 +178,7 @@ G.Social = (() => {
       try { localStorage.removeItem('ps.nick.' + uid); } catch (e) { /* nada */ }
       await deleteAll().catch(e => console.warn('[Social] borrar:', e));
     }
-    friends.clear(); invites.clear(); sentInv.clear();
+    friends.clear(); invites.clear(); sentInv.clear(); friendsError = '';
     me = null; started = false; fb = null; uid = null; playing = false;
     emit('stop');
   }
@@ -204,24 +205,54 @@ G.Social = (() => {
   // ---------------- amigos ----------------
 
   function listenFriends(ready) {
-    unFriends = fb.fs.collection('friendships').where('users', 'array-contains', uid).onSnapshot(snap => {
+    const mine = fb.fs.collection('friendships');
+    let outgoing = new Map(), incoming = new Map();
+    const settled = new Set();
+    const errors = new Map();
+    friendsError = '';
+    const rebuild = () => {
       const next = new Map();
-      snap.forEach(d => {
-        const f = d.data();
-        const other = f.users[0] === uid ? f.users[1] : f.users[0];
+      for (const [id, f] of [...outgoing, ...incoming]) {
+        const other = f.from === uid ? f.to : f.from;
         next.set(other, {
-          uid: other, pid: d.id, name: (f.names && f.names[other]) || '???',
+          uid: other, pid: id, name: (f.names && f.names[other]) || '???',
           status: f.status === 'ok' ? 'ok' : f.to === uid ? 'in' : 'out',
           online: false, play: false, room: '', seen: 0
         });
-      });
+      }
       friends = next;
+      friendsError = [...errors.values()][0] || '';
       emit('friends');
       // Con amigos ya te pueden invitar (y este navegador lo recuerda para la próxima vez).
       try { if (hasFriends()) localStorage.setItem(hasFrKey(), '1'); else localStorage.removeItem(hasFrKey()); } catch (e) { /* nada */ }
       if (hasFriends()) listenInvites();
-      if (ready) { ready(); ready = null; }
-    }, e => { console.warn('[Social] amigos:', e.code || e.message); if (ready) { ready(); ready = null; } });
+    };
+    const finish = key => {
+      if (settled.has(key)) return;
+      settled.add(key);
+      if (settled.size === 2 && ready) { ready(); ready = null; }
+    };
+    const onSnapshot = (key, query) => query.onSnapshot(snap => {
+      const docs = new Map(snap.docs.map(d => [d.id, d.data()]));
+      if (key === 'from') outgoing = docs; else incoming = docs;
+      errors.delete(key);
+      rebuild();
+      finish(key);
+    }, e => {
+      errors.set(key, e.code || e.message || 'error');
+      friendsError = [...errors.values()][0];
+      console.warn('[Social] amigos:', errors.get(key));
+      emit('friends-error');
+      if (unFriends) { unFriends(); unFriends = null; }
+      friendsReady = null;
+      finish(key);
+      finish(key === 'from' ? 'to' : 'from');
+    });
+    const stops = [
+      onSnapshot('from', mine.where('from', '==', uid)),
+      onSnapshot('to', mine.where('to', '==', uid))
+    ];
+    unFriends = () => stops.forEach(stop => stop());
   }
 
   /** (Quitado el 20-10-2026 con el "en línea": ya no lee nada.) */
@@ -624,6 +655,7 @@ G.Social = (() => {
     get me() { return me; },
     get started() { return started; },
     get friends() { return [...friends.values()]; },
+    get friendsError() { return friendsError; },
     get invites() { return [...invites.values()]; },
     get room() { return room; },
     get uid() { return uid; },

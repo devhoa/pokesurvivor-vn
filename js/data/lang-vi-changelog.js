@@ -1,6 +1,8 @@
 G.I18n.add({
   'Alojamiento web (GitHub Pages)': 'Dịch vụ lưu trữ web (GitHub Pages)',
   'Gratis': 'Miễn phí',
+  'No se pudo cargar la lista de amigos ({x}).': 'Không thể tải danh sách bạn bè ({x}).',
+  'Reintentar': 'Thử lại',
   'Dónde jugar': 'Địa chỉ chơi',
   'Juega gratis en devhoa.github.io/pokesurvivor-vn/ · sin anuncios': 'Chơi miễn phí tại devhoa.github.io/pokesurvivor-vn/ · không quảng cáo',
   'Esta versión de PokéSurvivor se juega gratis en devhoa.github.io/pokesurvivor-vn/.': 'Phiên bản PokéSurvivor này có thể chơi miễn phí tại devhoa.github.io/pokesurvivor-vn/.',
@@ -10,6 +12,7 @@ G.I18n.add({
   'Si otra web mete el juego dentro de su página (por ejemplo, para poner anuncios alrededor), sale un aviso con un botón para abrir la dirección de juego de este proyecto.': 'Nếu trang web khác nhúng trò chơi vào trang của họ (chẳng hạn để đặt quảng cáo xung quanh), thông báo sẽ xuất hiện cùng nút mở địa chỉ chơi của dự án này.',
   'Más vegetación en el mapa': 'Bản đồ có thêm nhiều cây cối',
   'Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.': 'Trên bản đồ giờ có thêm nhiều cây và cỏ cao, nhưng vẫn giữ lối đi thông thoáng.',
+  'Si falla la carga de amigos, ahora se muestra el error y puedes reintentar en vez de ver una lista vacía.': 'Nếu tải danh sách bạn bè thất bại, lỗi sẽ được hiển thị và bạn có thể thử lại thay vì chỉ thấy danh sách trống.',
   'El juego ya está en vietnamita': 'Trò chơi đã có tiếng Việt',
   'El juego ya está disponible en vietnamita. Elígelo en Ajustes > Gráficos > Idioma.': 'Trò chơi hiện đã có tiếng Việt. Chọn ngôn ngữ này tại Cài đặt > Đồ họa > Ngôn ngữ.',
   'Halloween se acerca': 'Halloween sắp đến',

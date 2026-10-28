@@ -169,6 +169,8 @@ G.I18n.add({
   '¡Has vencido a {x}! Recoge el premio…': 'You defeated {x}! Grab your reward…',
   'Criptomonedas': 'Cryptocurrencies', 'Web oficial': 'Official website',
   'Dónde jugar': 'Where to play',
+  'No se pudo cargar la lista de amigos ({x}).': 'Could not load the friends list ({x}).',
+  'Reintentar': 'Retry',
   'Juega gratis en devhoa.github.io/pokesurvivor-vn/ · sin anuncios': 'Play free at devhoa.github.io/pokesurvivor-vn/ · no ads',
   'Esta versión de PokéSurvivor se juega gratis en devhoa.github.io/pokesurvivor-vn/.': 'This version of PokéSurvivor is free to play at devhoa.github.io/pokesurvivor-vn/.',
   'Esta dirección no está autorizada para guardar en la nube. La partida sólo se guarda en este navegador. Juega en devhoa.github.io/pokesurvivor-vn/.': 'This address is not authorized for cloud saves. Your game is only saved in this browser. Play at devhoa.github.io/pokesurvivor-vn/.',

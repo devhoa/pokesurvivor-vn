@@ -27,11 +27,14 @@ No actualizar Firebase Authentication a Identity Platform.
 - Realtime Database: `europe-west1` (Bélgica).
 
 La configuración web de Firebase no es un secreto. Las reglas de Firestore
-permiten a cada usuario acceder a su propia partida y perfil, y reservar su
-propio apodo; el resto de colecciones queda denegado. Realtime Database también
-está en modo cerrado. Por eso las funciones de amigos, ranking y cooperativo no
-están disponibles en este proyecto hasta que se definan y publiquen reglas
-específicas para ellas.
+permiten a cada usuario acceder a su propia partida y perfil, reservar su
+propio apodo y leer el ranking con sesión iniciada. Las solicitudes de amistad
+sólo son visibles para sus dos participantes; el remitente puede crear una
+solicitud pendiente, el destinatario aceptarla y cualquiera de los dos
+eliminarla. Las escrituras del ranking siguen denegadas hasta tener validación
+de marcas en servidor. El resto de colecciones queda denegado. Realtime
+Database también está en modo cerrado, por lo que las salas y partidas
+cooperativas no están disponibles en este proyecto.
 
 Para publicar las reglas versionadas en el repositorio, desde la raíz:
 
