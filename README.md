@@ -182,3 +182,4 @@ Sprites de [SpriteCollab](https://github.com/PMDCollab/SpriteCollab) bajo
 está en [`CREDITS.md`](CREDITS.md). Pokémon es propiedad de Nintendo, Creatures
 Inc. y GAME FREAK. Proyecto de fan sin ánimo de lucro.
 # pokesurvivor-vn
+# pokesurvivor-vn
