@@ -340,20 +340,49 @@ G.Social = (() => {
     if (room && room.id === id) return { ok: true };
     if (room) await leaveRoom();
     rtOn();
-    let open = null, host = null;
+    try { await rinRef(id).set(true); }
+    catch (e) {
+      rtOff();
+      return { ok: false, error: 'No se pudo acceder a la sala (' + (e.code || 'error') + ').' };
+    }
+    let open, host;
     try {
-      open = (await fb.rtdb.ref('rooms/' + id + '/open').get()).val();
-      host = (await fb.rtdb.ref('rooms/' + id + '/host').get()).val();
-    } catch (e) { /* sala borrada */ }
-    if (!host) { rtOff(); return { ok: false, error: 'Esa sala ya no existe.' }; }
-    if (open !== true) { rtOff(); return { ok: false, error: 'La partida de esa sala ya ha empezado.' }; }
-    // (Con las reglas de antes de rin no se puede escribir: se sigue igual.)
-    await rinRef(id).set(true).catch(() => {});
+      [open, host] = await Promise.all([
+        fb.rtdb.ref('rooms/' + id + '/open').get().then(s => s.val()),
+        fb.rtdb.ref('rooms/' + id + '/host').get().then(s => s.val())
+      ]);
+    } catch (e) {
+      await rinRef(id).remove().catch(() => {});
+      rtOff();
+      return { ok: false, error: 'No se pudo comprobar la sala (' + (e.code || 'error') + ').' };
+    }
+    if (!host) {
+      await rinRef(id).remove().catch(() => {});
+      rtOff();
+      return { ok: false, error: 'Esa sala ya no existe.' };
+    }
+    if (open !== true) {
+      await rinRef(id).remove().catch(() => {});
+      rtOff();
+      return { ok: false, error: 'La partida de esa sala ya ha empezado.' };
+    }
     try { await fb.rtdb.ref('rooms/' + id + '/m/' + uid).set(memberInfo()); }
-    catch (e) { rtOff(); return { ok: false, error: 'No se pudo entrar en la sala.' }; }
-    const n = (await fb.rtdb.ref('rooms/' + id + '/m').get()).numChildren();
+    catch (e) {
+      await rinRef(id).remove().catch(() => {});
+      rtOff();
+      return { ok: false, error: 'No se pudo entrar en la sala (' + (e.code || 'error') + ').' };
+    }
+    let n;
+    try { n = (await fb.rtdb.ref('rooms/' + id + '/m').get()).numChildren(); }
+    catch (e) {
+      await fb.rtdb.ref('rooms/' + id + '/m/' + uid).remove().catch(() => {});
+      await rinRef(id).remove().catch(() => {});
+      rtOff();
+      return { ok: false, error: 'No se pudo comprobar el espacio de la sala (' + (e.code || 'error') + ').' };
+    }
     if (n > MAX_PLAYERS) {
       await fb.rtdb.ref('rooms/' + id + '/m/' + uid).remove();
+      await rinRef(id).remove().catch(() => {});
       rtOff();
       return { ok: false, error: 'La sala está llena (máximo ' + MAX_PLAYERS + ').' };
     }
@@ -526,7 +555,10 @@ G.Social = (() => {
     if (!f || f.status !== 'ok') return { ok: false, error: 'Sólo puedes invitar a tus amigos.' };
     if (room && room.members.length >= MAX_PLAYERS) return { ok: false, error: 'La sala está llena.' };
     if (room && !room.isHost) return { ok: false, error: 'Sólo el anfitrión de la sala puede invitar.' };
-    if (!room) await createRoom();
+    if (!room) {
+      try { await createRoom(); }
+      catch (e) { return { ok: false, error: 'No se pudo crear la sala (' + (e.code || 'error') + ').' }; }
+    }
     // Acabas de invitarle a esta sala: ya la tiene (pulsar otra vez no escribe nada; 25-10-2026).
     const s = sentInv.get(other);
     if (s && s.room === room.id && now() - s.at < REINVITE_MS) return { ok: true, msg: 'Invitación enviada a ' + f.name };

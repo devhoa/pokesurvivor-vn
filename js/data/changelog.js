@@ -10,6 +10,8 @@ G.CHANGELOG = [
     ['Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.',
      'More trees and tall grass now appear across the map without crowding paths.']
   ], fix: [
+    ['Amigos: las invitaciones para jugar ya pueden crear la sala y dejar entrar al amigo invitado.',
+     'Friends: game invites can now create the room and let the invited friend join.'],
     ['Si falla la carga de amigos, ahora se muestra el error y puedes reintentar en vez de ver una lista vacía.',
      'If loading friends fails, the error is now shown and you can retry instead of seeing an empty list.']
   ]},

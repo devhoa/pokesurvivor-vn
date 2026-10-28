@@ -31,10 +31,16 @@ permiten a cada usuario acceder a su propia partida y perfil, reservar su
 propio apodo y leer el ranking con sesión iniciada. Las solicitudes de amistad
 sólo son visibles para sus dos participantes; el remitente puede crear una
 solicitud pendiente, el destinatario aceptarla y cualquiera de los dos
-eliminarla. Las escrituras del ranking siguen denegadas hasta tener validación
-de marcas en servidor. El resto de colecciones queda denegado. Realtime
-Database también está en modo cerrado, por lo que las salas y partidas
-cooperativas no están disponibles en este proyecto.
+eliminarla. Las invitaciones de juego sólo pueden crearlas entre sí amigos
+confirmados y sólo las pueden leer o borrar sus participantes. Las escrituras
+del ranking siguen denegadas hasta tener validación de marcas en servidor; el
+resto de colecciones queda denegado.
+
+Realtime Database permite ahora las salas cooperativas limitadas: cada jugador
+sólo puede crear la sala cuyo ID es su UID; los miembros sólo pueden leer su
+sala; para unirse, el invitado registra primero su propia presencia; y la
+señalización sólo acepta mensajes pequeños entre miembros. El relé de datos de
+partida sigue apagado, de modo que el juego usa conexión WebRTC directa.
 
 Para publicar las reglas versionadas en el repositorio, desde la raíz:
 

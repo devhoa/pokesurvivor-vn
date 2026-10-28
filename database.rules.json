@@ -1,6 +1,63 @@
 {
   "rules": {
     ".read": false,
-    ".write": false
+    ".write": false,
+    "rooms": {
+      "$room": {
+        ".read": "auth != null && (auth.uid == $room || data.child('m').child(auth.uid).exists() || root.child('rin').child($room).child(auth.uid).val() == true)",
+        ".write": "auth != null && auth.uid == $room && (!data.exists() || !newData.exists())",
+        ".validate": "newData.hasChildren(['host', 'open', 'at', 'm']) && newData.child('host').val() == $room && newData.child('open').isBoolean() && newData.child('at').isNumber() && newData.child('m').child($room).exists()",
+        "host": {
+          ".validate": "newData.val() == $room"
+        },
+        "open": {
+          ".write": "auth != null && auth.uid == $room && data.parent().child('host').val() == $room",
+          ".validate": "newData.isBoolean()"
+        },
+        "at": {
+          ".validate": "newData.isNumber()"
+        },
+        "m": {
+          "$member": {
+            ".write": "auth != null && (($member == auth.uid && (data.exists() || (newData.exists() && root.child('rooms').child($room).child('open').val() == true && root.child('rin').child($room).child(auth.uid).val() == true))) || (auth.uid == $room && $member != $room && (data.exists() || root.child('rin').child($room).child($member).val() == true)))",
+            ".validate": "newData.hasChildren(['name', 'dex', 'shiny', 'at'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length <= 32"
+            },
+            "dex": {
+              ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 10000"
+            },
+            "shiny": {
+              ".validate": "newData.isBoolean()"
+            },
+            "at": {
+              ".validate": "newData.isNumber()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "q": {
+          "$to": {
+            "$message": {
+              ".write": "auth != null && ((auth.uid == $to && !newData.exists()) || (root.child('rooms').child($room).child('m').child(auth.uid).exists() && root.child('rooms').child($room).child('m').child($to).exists() && $message.length == auth.uid.length + 3 && $message.beginsWith(auth.uid + '_') && $message.matches(/.*_[0-9]{2}$/)))",
+              ".validate": "newData.isString() && newData.val().length <= 16000"
+            }
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "rin": {
+      "$room": {
+        "$uid": {
+          ".write": "auth != null && auth.uid == $uid && ((newData.exists() && newData.val() == true && root.child('rooms').child($room).child('host').val() == $room) || !newData.exists())",
+          ".validate": "newData.val() == true"
+        }
+      }
+    }
   }
 }

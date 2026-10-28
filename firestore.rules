@@ -10,6 +10,18 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function areFriends(userA, userB) {
+      let friendshipId = userA < userB
+        ? userA + '_' + userB
+        : userB + '_' + userA;
+      let friendshipPath = /databases/$(database)/documents/friendships/$(friendshipId);
+      return exists(friendshipPath)
+        && get(friendshipPath).data.status == 'ok'
+        && get(friendshipPath).data.users is list
+        && userA in get(friendshipPath).data.users
+        && userB in get(friendshipPath).data.users;
+    }
+
     match /saves/{userId} {
       allow read: if owns(userId);
       allow create: if owns(userId)
@@ -111,6 +123,33 @@ service cloud.firestore {
       allow delete: if signedIn()
         && resource.data.users is list
         && request.auth.uid in resource.data.users;
+    }
+
+    match /inv/{inviteId} {
+      function validInvite(data) {
+        return data.keys().hasAll(['to', 'from', 'room', 'name', 'at'])
+          && data.keys().hasOnly(['to', 'from', 'room', 'name', 'at'])
+          && data.to is string
+          && data.to != request.auth.uid
+          && data.from == request.auth.uid
+          && data.room == request.auth.uid
+          && data.name is string
+          && data.name.size() <= 16
+          && data.at == request.time
+          && inviteId == data.to + '_' + request.auth.uid
+          && areFriends(request.auth.uid, data.to);
+      }
+
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.to
+          || request.auth.uid == resource.data.from);
+      allow create: if signedIn() && validInvite(request.resource.data);
+      allow update: if signedIn()
+        && resource.data.from == request.auth.uid
+        && validInvite(request.resource.data);
+      allow delete: if signedIn()
+        && (request.auth.uid == resource.data.to
+          || request.auth.uid == resource.data.from);
     }
 
     match /{document=**} {
