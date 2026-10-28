@@ -1,6 +1,6 @@
 /* ============ noframe.js — el juego sólo se juega en su web ============
- * Hay webs que meten pokesurvivor.com dentro de un marco (iframe) y ponen sus
- * anuncios alrededor (pokesurvival.com, 19-10-2026). Si esta página está dentro
+ * Hay webs que meten el juego dentro de un marco (iframe) y ponen sus
+ * anuncios alrededor. Si esta página está dentro
  * de un marco de otra web, no arranca el juego (main.js mira PS_FRAMED) y
  * sale un aviso con un botón a la web oficial. Un marco de la misma web sí vale.
  * Va en un archivo aparte (y no dentro del HTML) por la CSP; lo usan el juego
@@ -21,18 +21,18 @@
 
   var lang = (window.PS_LOCALES && window.PS_LOCALES.lang) || document.documentElement.lang || 'en';
   var texts = {
-    es: ['Esta no es la web oficial', 'PokéSurvivor sólo se juega en su web oficial, gratis y sin anuncios.', 'Jugar en pokesurvivor.com'],
-    en: ['This is not the official website', 'PokéSurvivor can only be played on its official website, free and without ads.', 'Play on pokesurvivor.com'],
-    fr: ['Ce n’est pas le site officiel', 'PokéSurvivor se joue uniquement sur son site officiel, gratuitement et sans publicité.', 'Jouer sur pokesurvivor.com'],
-    it: ['Questo non è il sito ufficiale', 'PokéSurvivor si gioca solo sul suo sito ufficiale, gratis e senza pubblicità.', 'Gioca su pokesurvivor.com'],
-    'pt-BR': ['Este não é o site oficial', 'PokéSurvivor só pode ser jogado no site oficial, de graça e sem anúncios.', 'Jogar em pokesurvivor.com'],
-    'zh-Hans': ['这不是官方网站', 'PokéSurvivor 只能在官方网站免费游玩，没有广告。', '前往 pokesurvivor.com 游玩'],
-    'zh-Hant': ['這不是官方網站', 'PokéSurvivor 只能在官方網站免費遊玩，沒有廣告。', '前往 pokesurvivor.com 遊玩']
+    es: ['Juego abierto dentro de otra web', 'Abre PokéSurvivor directamente en su dirección de GitHub Pages para jugar gratis y sin anuncios.', 'Jugar en devhoa.github.io/pokesurvivor-vn'],
+    en: ['Game embedded in another website', 'Open PokéSurvivor directly at its GitHub Pages address to play free, without ads.', 'Play at devhoa.github.io/pokesurvivor-vn'],
+    fr: ['Jeu intégré à un autre site', 'Ouvrez PokéSurvivor directement à son adresse GitHub Pages pour jouer gratuitement, sans publicité.', 'Jouer sur devhoa.github.io/pokesurvivor-vn'],
+    it: ['Gioco incorporato in un altro sito', 'Apri PokéSurvivor direttamente al suo indirizzo GitHub Pages per giocare gratis, senza pubblicità.', 'Gioca su devhoa.github.io/pokesurvivor-vn'],
+    'pt-BR': ['Jogo incorporado em outro site', 'Abra PokéSurvivor diretamente no endereço do GitHub Pages para jogar grátis e sem anúncios.', 'Jogar em devhoa.github.io/pokesurvivor-vn'],
+    'zh-Hans': ['游戏被嵌入其他网站', '请直接打开 PokéSurvivor 的 GitHub Pages 地址，免费畅玩且没有广告。', '前往 devhoa.github.io/pokesurvivor-vn'],
+    'zh-Hant': ['遊戲嵌入在其他網站中', '請直接開啟 PokéSurvivor 的 GitHub Pages 網址，免費遊玩且沒有廣告。', '前往 devhoa.github.io/pokesurvivor-vn']
   };
   var copy = texts[lang] || texts.en;
 
   function show() {
-    var url = 'https://pokesurvivor.com' + location.pathname + location.search;
+    var url = 'https://devhoa.github.io/pokesurvivor-vn/';
     var box = document.createElement('div');
     box.setAttribute('translate', 'no');
     box.style.cssText = 'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;' +

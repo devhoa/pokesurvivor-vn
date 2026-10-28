@@ -188,8 +188,8 @@ G.CHANGELOG = [
      'Single-type Pokémon deal 20% more damage with moves of their type, to make up for having less variety.'],
     ['Al aprender un ataque nuevo ya no se cambia solo a él: sigues con el que estabas usando y cambias cuando tú quieras.',
      'Learning a new move no longer switches to it on its own: you keep the one you were using and switch whenever you want.'],
-    ['El juego sólo se puede jugar en su web oficial, pokesurvivor.com: si otra web lo mete dentro de la suya (por ejemplo, para ponerle anuncios alrededor), sale un aviso con un botón para ir a la oficial.',
-     'The game can only be played on its official website, pokesurvivor.com: if another site embeds it in its own page (for example, to put ads around it), a notice appears with a button to go to the official one.']
+    ['Si otra web mete el juego dentro de su página (por ejemplo, para poner anuncios alrededor), sale un aviso con un botón para abrir la dirección de juego de este proyecto.',
+     'If another website embeds the game on its page (for example, to put ads around it), a notice appears with a button to open this project’s game address.']
   ], fix: [
     ['Movimiento inicial: ya se puede volver al ataque de serie aunque no sea de su tipo (por ejemplo Confusión en Psyduck).',
      'Starting move: you can now go back to the default move even if it is not of its type (for example Confusion on Psyduck).'],
@@ -254,8 +254,8 @@ G.CHANGELOG = [
   ], chg: [
     ['Las tablas de la semana y del mes del ranking empiezan de cero, como el histórico: ahora sólo cuentan partidas con la Sentencia de Arceus y todas las tablas cuadran entre sí.',
      'The weekly and monthly leaderboards start from scratch, like the all-time one: now only runs with the Judgment of Arceus count, and all boards match each other.'],
-    ['Aviso importante: la única web oficial de PokéSurvivor es pokesurvivor.com. El juego es y será gratis: si alguna otra web te pide pagar (por tickets, monedas o lo que sea), no somos nosotros. Lo verás también al entrar y en el Aviso legal.',
-     'Important: the only official PokéSurvivor website is pokesurvivor.com. The game is and always will be free: if any other website asks you to pay (for tickets, coins or anything else), it isn’t us. You will also see this when signing in and in the Legal notice.'],
+    ['Esta versión de PokéSurvivor se juega gratis en devhoa.github.io/pokesurvivor-vn/. El juego es y será gratis: si alguien te pide pagar (por tickets, monedas o lo que sea), no somos nosotros. Lo verás también al entrar y en el Aviso legal.',
+     'This version of PokéSurvivor is free to play at devhoa.github.io/pokesurvivor-vn/. The game is and always will be free: if anyone asks you to pay (for tickets, coins or anything else), it isn’t us. You will also see this when signing in and in the Legal notice.'],
     ['El código del juego pasa a una licencia no comercial (PolyForm Noncommercial 1.0.0): se puede seguir estudiando y modificando, pero nadie puede cobrar por él.',
      'The game’s code moves to a non-commercial license (PolyForm Noncommercial 1.0.0): you can still study and modify it, but nobody may charge for it.']
   ], fix: [

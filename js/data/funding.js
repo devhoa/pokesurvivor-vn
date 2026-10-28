@@ -1,6 +1,6 @@
 /* ============ funding.js — donaciones ============
  * Las donaciones son voluntarias, no dan ninguna ventaja en el juego y se
- * usan sólo para mantenerlo en línea: servidores y dominio.
+ * se usan sólo para mantenerlo en línea: servidores y alojamiento web.
  * Este archivo es la fuente de lo que se enseña en el juego (botón "Apoyar")
  * y en la página /apoyar/. Se actualiza a mano:
  *
@@ -13,7 +13,7 @@ G.Funding = {
   sponsors: 'JPTER78',
   costs: [
     ['Servidores (partidas, cuentas, ranking y multijugador)', 'Según cuánta gente juegue'],
-    ['Dominio pokesurvivor.com', '≈12 € al año']
+    ['Alojamiento web (GitHub Pages)', 'Gratis']
   ],
   get url() { return this.kofi ? 'https://ko-fi.com/' + this.kofi : ''; }
 };

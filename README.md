@@ -113,8 +113,9 @@ la fuente (OFL) y las marcas de Pokémon tienen sus propias condiciones: ver
 [LICENSE](LICENSE) y [CREDITS.md](CREDITS.md). Proyecto de fan sin ánimo de
 lucro.
 
-**La única web oficial es [pokesurvivor.com](https://pokesurvivor.com).** El
-juego es y será gratis: si alguien te pide pagar, no somos nosotros.
+**La versión de este repositorio se juega gratis en
+[devhoa.github.io/pokesurvivor-vn](https://devhoa.github.io/pokesurvivor-vn/).**
+No necesita descargas ni tiene anuncios.
 
 ## Estructura
 

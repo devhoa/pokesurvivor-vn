@@ -1,4 +1,13 @@
 G.I18n.add({
+  'Alojamiento web (GitHub Pages)': 'Dịch vụ lưu trữ web (GitHub Pages)',
+  'Gratis': 'Miễn phí',
+  'Dónde jugar': 'Địa chỉ chơi',
+  'Juega gratis en devhoa.github.io/pokesurvivor-vn/ · sin anuncios': 'Chơi miễn phí tại devhoa.github.io/pokesurvivor-vn/ · không quảng cáo',
+  'Esta versión de PokéSurvivor se juega gratis en devhoa.github.io/pokesurvivor-vn/.': 'Phiên bản PokéSurvivor này có thể chơi miễn phí tại devhoa.github.io/pokesurvivor-vn/.',
+  'Esta versión de PokéSurvivor se juega gratis en devhoa.github.io/pokesurvivor-vn/. El juego es y será gratis: si alguien te pide pagar (por tickets, monedas o lo que sea), no somos nosotros. Lo verás también al entrar y en el Aviso legal.': 'Phiên bản PokéSurvivor này có thể chơi miễn phí tại devhoa.github.io/pokesurvivor-vn/. Trò chơi luôn miễn phí: nếu ai yêu cầu bạn trả tiền để mua vé, xu hoặc bất kỳ thứ gì khác thì không phải chúng tôi. Bạn cũng sẽ thấy thông báo này khi đăng nhập và trong mục Thông tin pháp lý.',
+  'Esta dirección no está autorizada para guardar en la nube. La partida sólo se guarda en este navegador. Juega en devhoa.github.io/pokesurvivor-vn/.': 'Địa chỉ này không được phép lưu trò chơi trên đám mây. Tiến trình chỉ được lưu trong trình duyệt này. Hãy chơi tại devhoa.github.io/pokesurvivor-vn/.',
+  'Versión de pruebas: la partida sólo se guarda en este navegador. Juega en devhoa.github.io/pokesurvivor-vn/.': 'Phiên bản thử nghiệm: tiến trình chỉ được lưu trong trình duyệt này. Hãy chơi tại devhoa.github.io/pokesurvivor-vn/.',
+  'Si otra web mete el juego dentro de su página (por ejemplo, para poner anuncios alrededor), sale un aviso con un botón para abrir la dirección de juego de este proyecto.': 'Nếu trang web khác nhúng trò chơi vào trang của họ (chẳng hạn để đặt quảng cáo xung quanh), thông báo sẽ xuất hiện cùng nút mở địa chỉ chơi của dự án này.',
   'Más vegetación en el mapa': 'Bản đồ có thêm nhiều cây cối',
   'Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.': 'Trên bản đồ giờ có thêm nhiều cây và cỏ cao, nhưng vẫn giữ lối đi thông thoáng.',
   'El juego ya está en vietnamita': 'Trò chơi đã có tiếng Việt',

@@ -541,14 +541,14 @@ G.DB = (() => {
   }
 
   /*
-   * La nube (Firebase) sólo desde la web oficial: el
+   * La nube (Firebase) sólo desde los dominios de publicación permitidos: el
    * código está en GitHub, y una copia publicada en otra web sin cambiar
    * firebase-config.js guardaría sus cuentas y partidas en NUESTRO proyecto
    * (y lo pagaríamos nosotros). Ahí el juego va en modo local. Lo que lo
    * cierra de verdad es la clave de la API restringida a estos dominios en
    * Google Cloud; esto frena las copias que ni lo miran (14-10-2026).
    */
-  const HOSTS = ['pokesurvivor.com', 'www.pokesurvivor.com', 'jpter78.github.io', 'devhoa.github.io', 'localhost', '127.0.0.1'];
+  const HOSTS = ['devhoa.github.io', 'localhost', '127.0.0.1'];
 
   async function initCloud() {
     const cfg = G.FIREBASE_CONFIG;
