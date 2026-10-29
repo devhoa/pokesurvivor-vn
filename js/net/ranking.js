@@ -33,9 +33,7 @@
  *
  * Ahorros:
  *   - Lo leído se guarda 2 h en el navegador (cambiar de pestaña y volver: 0).
- *   - Tus mejores marcas se recuerdan en el navegador: al acabar una partida
- *     no hay que leer nada para saber si has mejorado, y sólo se escribe
- *     donde mejoras.
+ *   - El Worker compara con tu marca anterior y sólo escribe cuando mejoras.
  *   - El resumen sólo se toca si tu marca entra en el top 50.
  *   - En diario, semanal y mensual sólo se guardan las marcas del top 50: si
  *     no entras no se escribe nada y tu puesto sale como "fuera del top 50".
@@ -52,28 +50,46 @@ G.Ranking = (() => {
   //  Pokémon y escribía; ahora también sólo el top 50.)
   const TOP_ONLY = new Set(['d', 'w', 'm', 'p']);
   const TOP = 50;
-  // Las runs de menos de 2 minutos no se suben (nunca entran en un top que
-  // importe y eran muchas lecturas y escrituras para nada: los que empiezan
-  // mueren a menudo en el primer minuto; era 1 min hasta el 14-10-2026).
+  // Las runs de menos de 2 minutos no se suben (antes era 1 minuto).
   const MIN_T = 120;
-  // En el histórico de cada Pokémon, 10 min (5 hasta el 25-10-2026): con más de mil
-  // tablas, casi ninguna llega a 50 marcas y aceptaban cualquier partida (2
-  // escrituras cada vez; eran ~1/10 de todas las escrituras de Firestore).
-  const MIN_T_MON = 600;
-  // Caché de lo leído: 2 h (era 30 min hasta el 20-10-2026). Tu marca nueva se
-  // ve al momento igual (al subirla se guarda en la caché lo que se escribió).
+  // Caché de lo leído: 2 h (era 30 min hasta el 20-10-2026). Tras subir una
+  // marca, se invalida para que la próxima lectura vea el resultado del Worker.
   const TTL = 2 * 3600 * 1000;
 
   const fbx = () => G.DB.online ? G.DB.fb : null;
 
   // ---------------- sello ----------------
   /*
-   * Al empezar cada partida se pide un sello a ice.pokesurvivor.com (el servidor
+   * Al empezar cada partida se pide un sello a ice.pokesurvivor.com (el servicio
    * del cooperativo): tu cuenta y la hora, firmadas. Va con la marca y sin él no
    * entra en el ranking. En grupo cada uno pide el suyo y el invitado se lo
    * manda al anfitrión (coop.js), que es quien sube la marca.
    */
   const SEAL_API = 'https://ice.pokesurvivor.com/v1/seal';
+  const SUBMIT_API = 'https://ice.pokesurvivor.com';
+  async function postRanking(path, body) {
+    const fb = fbx(), user = fb && fb.auth.currentUser;
+    if (!user) throw new Error('inicia sesión para guardar el ranking');
+    const token = await user.getIdToken();
+    const response = await fetch(SUBMIT_API + path, {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+    return result;
+  }
+  function invalidateRankingCache() {
+    mem.clear();
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('ps.rk.c.')) localStorage.removeItem(key);
+      }
+      localStorage.removeItem(bestKey());
+    } catch (e) { console.warn('[Ranking] no se pudo limpiar la caché', e.message); }
+  }
   let seal = null, sealRun = 0;
   function newSeal() {
     seal = null;
@@ -179,8 +195,7 @@ G.Ranking = (() => {
   }
   cachePrune();
 
-  // Tus mejores marcas por tabla (para no leer antes de escribir): "tabla:id"
-  // el tiempo y "tabla:id#d" el daño a Arceus.
+  // Puestos que ya conoce este navegador para evitar repetir el recuento: "tabla:id".
   // (best2 desde 2026-10-12: se quitaron del ranking las marcas rotas; así quien
   //  tenía una vuelve a mirar su marca real y puede volver a entrar.)
   const bestKey = () => 'ps.rk.best2.' + (fbx() ? fbx().uid : '');
@@ -190,32 +205,6 @@ G.Ranking = (() => {
     const cur = Object.values(boardIds());
     for (const k of Object.keys(b)) if (!cur.some(p => k.split(':')[0].split('_')[1] === p)) delete b[k];
     try { localStorage.setItem(bestKey(), JSON.stringify(b)); } catch (e) { /* lleno */ }
-  }
-
-  // ---------------- umbral de cada tabla ----------------
-  /*
-   * La marca más baja del top 50 de cada tabla, cuando está llena. Sólo puede
-   * subir con el tiempo, así que un valor viejo sigue sirviendo: si tu marca
-   * no lo supera, seguro que no entra y no hace falta leer nada (cada resumen
-   * pesa ~30 KB y al acabar una partida se miraban hasta 5; 13-10-2026).
-   * "tabla" la del tiempo y "tabla#d" la del daño a Arceus.
-   */
-  const THR = 'ps.rk.thr';
-  function thresholds() { try { return JSON.parse(localStorage.getItem(THR) || '{}'); } catch (e) { return {}; } }
-  function noteTop(b, sum) {
-    const t = thresholds();
-    let changed = false;
-    for (const [k, rows, f] of [[b, sum.top, v => v.t], [b + '#d', sum.dtop, v => v.d]]) {
-      const vals = Object.values(rows || {});
-      if (vals.length < TOP) continue;
-      const low = Math.min(...vals.map(f));
-      if ((t[k] || 0) < low) { t[k] = low; changed = true; }
-    }
-    if (!changed) return;
-    // Sólo las tablas de los periodos de ahora (y las históricas).
-    const cur = Object.values(boardIds());
-    for (const k of Object.keys(t)) if (!cur.some(p => k.split('#')[0].split('_')[1] === p)) delete t[k];
-    try { localStorage.setItem(THR, JSON.stringify(t)); } catch (e) { /* lleno */ }
   }
 
   // ---------------- guardar ----------------
@@ -231,9 +220,6 @@ G.Ranking = (() => {
   const sortedD = dtop => Object.entries(dtop || {}).map(([id, v]) => rowOf(id, v)).sort((a, b) => b.d - a.d);
   // Filas del resumen: copia exacta de la marca (lo comprueba firestore.rules).
   // (Sin "shiny" si no hay ninguno: el resumen pesa menos.)
-  const shinyOf = (e, row) => { if (e.shiny.some(Boolean)) row.shiny = e.shiny; return row; };
-  const rowT = e => shinyOf(e, { t: e.t, uids: e.uids, names: e.names, dex: e.dex, lv: e.lv, kills: e.kills });
-  const rowD = e => shinyOf(e, { d: e.dmg, uids: e.uids, names: e.names, dex: e.dex });
   /** El resumen tal cual se vuelve a escribir (sin perder la otra mitad). */
   const sumOut = (top, dtop, me, ev, dev) => (dtop && Object.keys(dtop).length ? { top, dtop, me, ev, dev: dev || '' } : { top, me, ev });
   const now = () => firebase.firestore.FieldValue.serverTimestamp();
@@ -249,7 +235,7 @@ G.Ranking = (() => {
    * quitó el 23-10-2026: en el minuto 35 Arceus rompe los objetos).
    */
   /** Al empezar a jugar: sube las marcas del histórico que esperaban (ver DEFER). */
-  function runStarted() { flushDeferred(); }
+  function runStarted() { flushDeferred().catch(e => console.warn('[Ranking] no se pudo subir una marca pendiente', e.message)); }
 
   /*
    * Tu marca del histórico FUERA del top 50 (20-10-2026): nadie la ve, sólo
@@ -262,15 +248,7 @@ G.Ranking = (() => {
   const defKey = () => DEF + '.' + (fbx() ? fbx().uid : '');
   function deferred() { try { return JSON.parse(localStorage.getItem(defKey()) || '{}'); } catch (e) { return {}; } }
   function saveDeferred(d) { try { localStorage.setItem(defKey(), JSON.stringify(d)); } catch (e) { /* lleno */ } }
-  /** ¿Toca subirla ya (hace DEFER que no) o se deja esperando? → true si hay que subirla. */
-  function dueOrDefer(b, id, entry) {
-    const d = deferred(), k = b + ':' + id, up = (d[k] && d[k].up) || 0;
-    if (Date.now() - up >= DEFER) { d[k] = { up: Date.now() }; saveDeferred(d); return true; }
-    // (Si ya esperaba una mejor, se queda esa: 25-10-2026, una partida peor la sustituía.)
-    d[k] = { up, e: d[k] && d[k].e && d[k].e.t >= entry.t ? d[k].e : entry }; saveDeferred(d);
-    return false;
-  }
-  function flushDeferred() {
+  async function flushDeferred() {
     const fb = fbx();
     if (!fb) return;
     const d = deferred();
@@ -278,106 +256,19 @@ G.Ranking = (() => {
     for (const [k, v] of Object.entries(d)) {
       if (!v || !v.e) { if (v && Date.now() - (v.up || 0) > DEFER) { delete d[k]; changed = true; } continue; }
       if (Date.now() - (v.up || 0) < DEFER) continue;
-      const i = k.indexOf(':'), b = k.slice(0, i), id = k.slice(i + 1);
-      d[k] = { up: Date.now() }; changed = true;
-      // (Si ya hay una mejor en la nube, las reglas la rechazan: no pasa nada.)
-      col(b).doc(id).set(Object.assign({}, v.e, { at: now() })).catch(() => {});
-      mem.delete('r:' + b); try { localStorage.removeItem('ps.rk.c.r:' + b); } catch (e) { /* nada */ }
-    }
-    if (changed) saveDeferred(d);
-  }
-  /** Ya se ha subido por otro camino (entró en el top): nada que esperar. */
-  function clearDeferred(b, id) {
-    const d = deferred(), k = b + ':' + id;
-    if (d[k] && d[k].e) { d[k] = { up: Date.now() }; saveDeferred(d); }
-  }
-
-  /** Guarda la entrada en cada tabla donde mejore (tiempo o daño). → periodos mejorados */
-  async function store(boards, id, entry) {
-    const fb = fbx();
-    const better = [];
-    const known = bests();
-    const thr = thresholds();
-    await Promise.all(boards.map(async ([b, period]) => {
-      const key = b + ':' + id, dkey = key + '#d';
       try {
-        const topOnly = TOP_ONLY.has(period);
-        // Daño a Arceus: sólo en las tablas de periodo (no en las de cada Pokémon).
-        const dmg = period === 'p' ? 0 : entry.dmg || 0;
-        // Si no llegas a la 50.ª marca que conoce este navegador, no entras en
-        // ese top 50 (en diario, semanal, mensual y por Pokémon, ni se lee nada).
-        const thrT = thr[b] || 0, thrD = thr[b + '#d'] || 0;
-        const cached = cacheGet('S:' + b);
-        const canT = !thrT || entry.t > thrT || !!(cached && cached.top && id in cached.top);
-        const canD = dmg > 0 && (!thrD || dmg > thrD || !!(cached && cached.dtop && id in cached.dtop));
-        if (topOnly && !canT && !canD) return;
-        // ¿Ya tenías una marca mejor? En el histórico, si este navegador no lo
-        // sabe, se mira una vez tu marca (pequeña). En las demás lo dice la
-        // marca, que se lee dentro de la transacción de abajo.
-        if (known[key] === undefined && !topOnly) {
-          const old = await col(b).doc(id).get();
-          known[key] = old.exists ? old.data().t : 0;
-          known[dkey] = old.exists ? old.data().dmg || 0 : 0;
-        }
-        const upT = entry.t > (known[key] || 0), upD = dmg > (known[dkey] || 0);
-        if (!upT && !upD) return;
-        const stamp = e => Object.assign({}, e, { at: firebase.firestore.FieldValue.serverTimestamp() });
-        let waiting = false, wrote = false;
-        if (!canT && !canD) {
-          // Histórico fuera de los dos top 50: sólo cuenta el tiempo (tu puesto
-          // exacto), y como mucho cada DEFER (ver arriba).
-          if (!upT) return;
-          const e = Object.assign({}, entry, { dmg: Math.max(dmg, known[dkey] || 0) });
-          if (dueOrDefer(b, id, e)) { await col(b).doc(id).set(stamp(e)); wrote = true; } else waiting = true;
-        } else {
-          let newSum = null;
-          await fb.fs.runTransaction(async tx => {
-            const s = await tx.get(sumRef(b));
-            const old = await tx.get(col(b).doc(id));
-            const sd = s.exists ? s.data() : {};
-            const top = Object.assign({}, sd.top || {}), dtop = Object.assign({}, sd.dtop || {});
-            newSum = { top: sd.top || {}, dtop: sd.dtop || {} };
-            const o = old.exists ? old.data() : null, ot = o ? o.t || 0 : 0, od = o ? o.dmg || 0 : 0;
-            const bt = entry.t > ot, bd = dmg > od;
-            // Ya tenías algo mejor (otro ordenador): nada que escribir.
-            if (!bt && !bd) return;
-            // La marca: lo mejor de cada cosa (nivel y derrotados, los del mejor tiempo).
-            const e = Object.assign({}, entry, { dmg: Math.max(dmg, od) }, bt ? {} : { t: ot, lv: o.lv, kills: o.kills });
-            let ev = '', dev = '', inT = false, inD = false;
-            if (bt) {
-              if (id in top || Object.keys(top).length < TOP) inT = true;
-              else { const low = sorted(top).pop(); if (low.t < e.t) { ev = low.id; delete top[ev]; inT = true; } }
-              if (inT) top[id] = rowT(e);
-            }
-            if (bd) {
-              if (id in dtop || Object.keys(dtop).length < TOP) inD = true;
-              else { const low = sortedD(dtop).pop(); if (low.d < e.dmg) { dev = low.id; delete dtop[dev]; inD = true; } }
-              if (inD) dtop[id] = rowD(e);
-            }
-            // No entra en ningún top: en el histórico se guarda la marca (tu puesto); en los demás, nada.
-            if (!inT && !inD) { if (!topOnly && bt) { tx.set(col(b).doc(id), stamp(e)); wrote = true; } return; }
-            tx.set(col(b).doc(id), stamp(e));
-            tx.set(sumRef(b), sumOut(top, dtop, id, ev, dev));
-            newSum = { top, dtop };
-            wrote = true;
-          });
-          if (newSum) { cacheSet('S:' + b, newSum); noteTop(b, newSum); }
-          if (!topOnly && wrote) clearDeferred(b, id);
-        }
-        known[key] = Math.max(known[key] || 0, entry.t);
-        known[dkey] = Math.max(known[dkey] || 0, dmg);
-        if (!wrote && !waiting) return;
-        if (b.startsWith('g_')) known[b + ':*'] = Math.max(known[b + ':*'] || 0, entry.t);
-        // (Si la marca espera para subir, tu puesto en la nube aún no ha cambiado:
-        // myRank enseña la que espera sin volver a leer nada.)
-        if (!waiting) { mem.delete('r:' + b); try { localStorage.removeItem('ps.rk.c.r:' + b); } catch (e) { /* nada */ } }
-        if (period && period !== 'p' && !better.includes(period)) better.push(period);
-      } catch (e) { console.warn('[Ranking] no se pudo guardar en', b, e.code || e.message); }
-    }));
-    saveBests(known);
-    return better;
+        await postRanking('/v1/deferred', { entry: v.e });
+        delete d[k];
+        changed = true;
+      } catch (e) {
+        console.warn('[Ranking] no se pudo subir una marca pendiente', e.message);
+      }
+    }
+    if (changed) {
+      saveDeferred(d);
+      invalidateRankingCache();
+    }
   }
-
   function announce(better) {
     if (!better.length) return;
     const names = { d: 'de hoy', w: 'de la semana', m: 'del mes', a: 'histórico' };
@@ -403,13 +294,13 @@ G.Ranking = (() => {
   async function submitSoloNow(r) {
     const fb = fbx();
     const sl = mySeal();
-    if (!fb || !G.Social.me || r.t < MIN_T || !sl) return [];
-    flushDeferred();
-    const ids = boardIds();
+    if (!fb || !G.Social.me || r.t < MIN_T) return [];
+    if (!sl) throw new Error('No se pudo validar la partida al empezar; no se ha enviado al ranking.');
+    await flushDeferred().catch(e => console.warn('[Ranking] no se pudo subir una marca pendiente', e.message));
     const entry = Object.assign({ uids: [fb.uid], names: [G.Social.me.name], dex: [r.dex], shiny: [!!r.shiny], seal: [sl] }, fit(r));
-    const boards = PERIODS.map(([p]) => ['s_' + ids[p], p]);
-    if (r.t >= MIN_T_MON) boards.push(['s_' + ALL + '_p' + r.dex, 'p']);
-    const better = await store(boards, fb.uid, entry);
+    const result = await postRanking('/v1/submit', { mode: 's', entry });
+    const better = result.better || [];
+    invalidateRankingCache();
     announce(better);
     return better;
   }
@@ -420,16 +311,14 @@ G.Ranking = (() => {
     const fb = fbx();
     if (!fb || r.t < MIN_T || !r.members || r.members.length < 2) return [];
     const ms = r.members.slice().sort((a, b) => (a.uid < b.uid ? -1 : 1));
-    const id = ms.map(m => m.uid).join('_');
     // El sello de cada uno (el mío, de aquí; el de los demás, el que mandaron).
     const seals = ms.map(m => (m.uid === fb.uid ? mySeal() : okSeal(m.seal) ? { s: m.seal.s, g: m.seal.g } : null));
-    if (seals.some(x => !x)) return [];
+    if (seals.some(x => !x)) throw new Error('Falta validar la partida de un compañero; no se ha enviado al ranking.');
     const entry = Object.assign({ uids: ms.map(m => m.uid), names: ms.map(m => m.name), dex: ms.map(m => m.dex),
                     shiny: ms.map(m => !!m.shiny), seal: seals }, fit(r));
-    const ids = boardIds();
-    const boards = PERIODS.map(([p]) => ['g_' + ids[p], p]);
-    if (r.t >= MIN_T_MON) for (const d of new Set(entry.dex)) boards.push(['g_' + ALL + '_p' + d, 'p']);
-    const better = await store(boards, id, entry);
+    const result = await postRanking('/v1/submit', { mode: 'g', entry });
+    const better = result.better || [];
+    invalidateRankingCache();
     announce(better);
     return better;
   }
@@ -446,7 +335,6 @@ G.Ranking = (() => {
         const d = s.exists ? s.data() : {};
         const sum = { top: d.top || {}, dtop: d.dtop || {} };
         cacheSet('S:' + b, sum);
-        noteTop(b, sum);
         return sum;
       }).finally(() => inflight.delete(b)));
     }

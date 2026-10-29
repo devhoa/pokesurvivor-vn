@@ -1,4 +1,5 @@
 G.I18n.add({
+  'No se pudo guardar la marca del ranking ({x}).': 'Không thể lưu thành tích bảng xếp hạng ({x}).',
   'Alojamiento web (GitHub Pages)': 'Dịch vụ lưu trữ web (GitHub Pages)',
   'Gratis': 'Miễn phí',
   'No se pudo cargar la lista de amigos ({x}).': 'Không thể tải danh sách bạn bè ({x}).',
@@ -12,6 +13,7 @@ G.I18n.add({
   'Si otra web mete el juego dentro de su página (por ejemplo, para poner anuncios alrededor), sale un aviso con un botón para abrir la dirección de juego de este proyecto.': 'Nếu trang web khác nhúng trò chơi vào trang của họ (chẳng hạn để đặt quảng cáo xung quanh), thông báo sẽ xuất hiện cùng nút mở địa chỉ chơi của dự án này.',
   'Ajustes de Pokémon': 'Điều chỉnh chỉ số Pokémon',
   'Rayquaza ahora tiene ×5,52 de ataque físico y especial.': 'Rayquaza hiện có chỉ số tấn công vật lý và đặc biệt ×5,52.',
+  'El ranking ahora avisa cuando no puede guardar una marca, en vez de descartarla sin mostrar el error.': 'Bảng xếp hạng giờ sẽ thông báo khi không thể lưu thành tích thay vì âm thầm bỏ qua lỗi.',
   'Más espacio para moverse': 'Không gian di chuyển rộng rãi hơn',
   'Los árboles aparecen como máximo en el 0,2 % de las casillas aptas, también en las zonas de bosque.': 'Cây xuất hiện nhiều nhất trên 0,2% ô phù hợp, kể cả trong khu vực rừng.',
   'Más vegetación en el mapa': 'Bản đồ có thêm nhiều cây cối',

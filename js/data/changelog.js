@@ -9,6 +9,9 @@ G.CHANGELOG = [
   { d: '2026-10-29', title: ['Ajustes de Pokémon', 'Pokémon balance changes'], chg: [
     ['Rayquaza ahora tiene ×5,52 de ataque físico y especial.',
      'Rayquaza now has ×5.52 physical and special attack.']
+  ], fix: [
+    ['El ranking ahora avisa cuando no puede guardar una marca, en vez de descartarla sin mostrar el error.',
+     'The leaderboard now reports when it cannot save a record instead of silently discarding it.']
   ]},
   { d: '2026-10-29', title: ['Más espacio para moverse', 'More room to move'], chg: [
     ['Los árboles aparecen como máximo en el 0,2 % de las casillas aptas, también en las zonas de bosque.',

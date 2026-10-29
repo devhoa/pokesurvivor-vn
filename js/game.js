@@ -437,7 +437,10 @@ G.Game = (() => {
     const ok = clean();
     const sent = ok && !coop ? G.Ranking.submitSolo(Object.assign(mark, { dex: pl.dex, shiny: pl.shiny }))
                : ok && wasHost ? G.Ranking.submitGroup(Object.assign(mark, { members: team })) : null;
-    if (sent) sent.catch(() => {});
+    if (sent) sent.catch(e => {
+      console.warn('[Ranking] no se pudo enviar la marca', e.message);
+      G.UI.toast(G.I18n.f('No se pudo guardar la marca del ranking ({x}).', e.message), 5000);
+    });
 
     G.RunUI.showOver({
       dead, time, level: pl.level, kills: pl.kills, bosses: pl.bosses, coins, record, t1: pl.t1, t10: pl.t10, candy: pl.candy || 0, judge,

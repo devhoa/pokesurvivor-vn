@@ -63,8 +63,8 @@ service cloud.firestore {
       allow delete: if signedIn() && resource.data.uid == request.auth.uid;
     }
 
-    // Los rankings son visibles para jugadores con sesión iniciada. Las
-    // escrituras siguen denegadas hasta tener validación de marcas en servidor.
+    // Los jugadores pueden leer los rankings. Las marcas las escribe el Worker
+    // después de validar la cuenta y el sello; los clientes no pueden escribir.
     match /lbs/{board} {
       allow read: if signedIn();
     }

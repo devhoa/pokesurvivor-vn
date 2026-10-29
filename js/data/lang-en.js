@@ -1025,6 +1025,8 @@ G.I18n.add({
   "Aún no estás en el top 50 de daño.": "You're not in the damage top 50 yet.",
   "Tu puesto: {x}": "Your rank: {x}",
   "Ranking de daño a Arceus y Tablas": "Arceus damage ranking and Plates",
+  "No se pudo guardar la marca del ranking ({x}).": "Couldn't save the leaderboard record ({x}).",
+  "El ranking ahora avisa cuando no puede guardar una marca, en vez de descartarla sin mostrar el error.": "The leaderboard now reports when it cannot save a record instead of silently discarding it.",
   "EN DIRECTO": "LIVE",
   "Mi canal de YouTube": "My YouTube channel",
   "¡Estoy en directo! Pulsa para verlo": "I'm live! Click to watch",

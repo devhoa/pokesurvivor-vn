@@ -11,6 +11,7 @@ const G1 = 'a'.repeat(64);
 function env({ sealStatus = 200 } = {}) {
   const docs = new Map();             // ruta -> datos
   const store = new Map();
+  const requests = [];
   const clone = o => JSON.parse(JSON.stringify(o));
   const ruleOk = (p, d) => {
     if (!p.startsWith('lb/')) return true;
@@ -43,27 +44,32 @@ function env({ sealStatus = 200 } = {}) {
   };
   const localStorage = { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)),
     removeItem: k => store.delete(k), key: i => [...store.keys()][i], get length() { return store.size; } };
-  // ice.pokesurvivor.com/v1/seal falso.
-  const fetch = async () => ({ ok: sealStatus === 200, status: sealStatus, json: async () => ({ s: 1800000000000, g: G1 }) });
+  // API del Worker falso: el cliente no escribe directamente en Firestore.
+  const fetch = async (url, options = {}) => {
+    if (url.endsWith('/v1/seal')) {
+      return { ok: sealStatus === 200, status: sealStatus, json: async () => ({ s: Date.now(), g: G1 }) };
+    }
+    const body = JSON.parse(options.body || '{}');
+    requests.push({ url, body });
+    return { ok: true, status: 200, json: async () => ({ better: ['d', 'w', 'm', 'a'] }) };
+  };
   const ctx = { G, localStorage, console: { warn() {}, log: console.log }, Intl, Date, Math, JSON, Object, Promise, Number,
     fetch, AbortController, setTimeout: (f, ms) => setTimeout(f, Math.min(ms, 5)), clearTimeout,
     firebase: { firestore: { FieldValue: { serverTimestamp: () => 0 } } } };
   vm.createContext(ctx);
   vm.runInContext(SRC, ctx);
-  return { R: G.Ranking, docs, store };
+  return { R: G.Ranking, docs, store, requests };
 }
 const sealed = async o => { const x = env(o); x.R.newSeal(); await new Promise(r => setTimeout(r, 30)); return x; };
 
 test('una partida con más de 12 derrotados por segundo entra igual (antes el servidor la rechazaba entera)', async () => {
-  const { R, docs } = await sealed();
+  const { R, requests } = await sealed();
   await R.submitSolo({ t: 2400, lv: 200, kills: 40000, dex: 25, shiny: false, dmg: 0 });
-  const b = R.board('s', 'a');
-  const e = docs.get('lb/' + b + '/e/U1');
-  assert.ok(e, 'la marca del histórico está guardada');
-  assert.equal(e.t, 2400);
-  assert.equal(e.kills, 100 + 2400 * 12);
-  assert.ok(docs.get('lbs/' + b).top.U1, 'y está en el top 50');
-  for (const p of ['d', 'w', 'm']) assert.ok(docs.get('lbs/' + R.board('s', p)).top.U1, 'también en ' + p);
+  const request = requests.find(r => r.url.endsWith('/v1/submit'));
+  assert.ok(request, 'la marca llega al backend');
+  assert.equal(request.body.mode, 's');
+  assert.equal(request.body.entry.t, 2400);
+  assert.equal(request.body.entry.kills, 100 + 2400 * 12);
 });
 
 test('el histórico enseña lo que ya se sabe del semanal (leído después): ya cuadran', async () => {
@@ -80,27 +86,29 @@ test('el histórico enseña lo que ya se sabe del semanal (leído después): ya 
 });
 
 test('sello del ranking: va con la marca (con rt); sin él, o sin el de un compañero, no se sube nada', async () => {
-  const { R, docs } = await sealed();
+  const { R, requests } = await sealed();
   await R.submitSolo({ t: 900, lv: 50, kills: 100, dex: 25, shiny: false, dmg: 0 });
-  const e = docs.get('lb/' + R.board('s', 'a') + '/e/U1');
-  assert.deepEqual(JSON.parse(JSON.stringify(e.seal)), [{ s: 1800000000000, g: G1 }]);
+  const e = requests.find(r => r.url.endsWith('/v1/submit')).body.entry;
+  assert.ok(Number.isSafeInteger(e.seal[0].s));
+  assert.equal(e.seal[0].g, G1);
   assert.equal(e.rt, 900);
   // En grupo: el invitado sin sello → nada.
   const mem = [{ uid: 'U1', name: 'Ash', dex: 25 }, { uid: 'U2', name: 'Misty', dex: 7 }];
-  assert.equal((await R.submitGroup({ t: 900, lv: 50, kills: 100, dmg: 0, members: mem })).length, 0);
+  await assert.rejects(R.submitGroup({ t: 900, lv: 50, kills: 100, dmg: 0, members: mem }), /validar/);
   mem[1].seal = { s: 1800000000001, g: 'b'.repeat(64) };
   await R.submitGroup({ t: 900, lv: 50, kills: 100, dmg: 0, members: mem });
-  const g = docs.get('lb/' + R.board('g', 'a') + '/e/U1_U2');
-  assert.deepEqual(JSON.parse(JSON.stringify(g.seal)).map(x => x.s), [1800000000000, 1800000000001]);
+  const g = requests.filter(r => r.url.endsWith('/v1/submit'))[1].body.entry;
+  assert.equal(g.seal[0].s, e.seal[0].s);
+  assert.equal(g.seal[1].s, 1800000000001);
   for (const st of [403, 500]) {
     const x = await sealed({ sealStatus: st });
-    assert.equal((await x.R.submitSolo({ t: 900, lv: 50, kills: 100, dex: 25, shiny: false, dmg: 0 })).length, 0);
-    assert.equal(x.docs.size, 0, 'sin sello (' + st + ') no se escribe nada');
+    await assert.rejects(x.R.submitSolo({ t: 900, lv: 50, kills: 100, dex: 25, shiny: false, dmg: 0 }));
+    assert.equal(x.requests.length, 0, 'sin sello (' + st + ') no se envía nada');
   }
 });
 
 test('daño a Arceus: antes del minuto 30 no cuenta y tiene tope por segundo de Sentencia', async () => {
-  const { R, docs } = await sealed();
+  const { R, requests } = await sealed();
   await R.submitSolo({ t: 1900, lv: 50, kills: 100, dex: 25, shiny: false, dmg: 1e12 });
-  assert.equal(docs.get('lb/' + R.board('s', 'a') + '/e/U1').dmg, (1900 - 1799) * 50000);
+  assert.equal(requests[0].body.entry.dmg, (1900 - 1799) * 50000);
 });
