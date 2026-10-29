@@ -92,6 +92,7 @@ G.DB = (() => {
       // Tienda Kecleon (20-10-2026, ver data/shop.js y systems/mons.js):
       bag: {},                // Mochila: id -> cuántos (mint, cap, caph); en la libreta, como las monedas
       tms: {},                // MT sin usar: movimiento -> cuántas; también en la libreta
+      tmShop: { day: '', rerolls: 0 }, // cambios de las MT del día
       ptm: {},                // dex -> [movimientos aprendidos con MT] (para siempre)
       pnat: {},               // dex -> [naturaleza, fecha]: la cambiada con Menta (si no, la que le tocó)
       pabil: {},              // dex -> [0|1|2, fecha]: la habilidad cambiada con Cápsula (2 = oculta)
@@ -173,6 +174,9 @@ G.DB = (() => {
         if (!s[k][id] || !ok(id)) delete s[k][id];
       }
     }
+    if (!isObj(s.tmShop)) s.tmShop = { day: '', rerolls: 0 };
+    if (typeof s.tmShop.day !== 'string' || !/^\d{8}$/.test(s.tmShop.day)) s.tmShop.day = '';
+    if (!Number.isSafeInteger(s.tmShop.rerolls) || s.tmShop.rerolls < 0) s.tmShop.rerolls = 0;
     // MT aprendidas: movimientos que existen, sin repetir.
     if (!isObj(s.ptm)) s.ptm = {};
     for (const d of Object.keys(s.ptm)) {

@@ -24,6 +24,7 @@ G.Shop = (() => {
   };
   const ORDER = ['mint', 'cap', 'caph'];
   const DAILY = 8;
+  const TM_REROLL_PRICE = 20;
 
   const save = () => G.DB.save;
 
@@ -57,17 +58,41 @@ G.Shop = (() => {
     for (let i = 0; i < seed.length; i++) { h ^= seed.charCodeAt(i); h = Math.imul(h, 16777619); }
     return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   }
-  /** Las 8 MT a la venta hoy. */
-  function dailyTms() {
-    const all = Object.keys(G.TM_MOVES).sort(), r = rng('kecleon:' + today());
+  function dailyTmsAt(day, dex, rerolls) {
+    const suffix = rerolls ? ':reroll:' + rerolls : '';
+    const all = Object.keys(G.TM_MOVES).sort(), r = rng('kecleon:' + day + suffix);
     for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
     const list = all.slice(0, DAILY);
-    const s = save(), dex = s && s.partner;
     if (dex && !list.some(id => G.Mons.canLearn(dex, id))) {
       const mine = G.Mons.learnable(dex).sort();
-      if (mine.length) list[DAILY - 1] = mine[Math.floor(rng('kecleon:' + today() + ':' + dex)() * mine.length)];
+      if (mine.length) list[DAILY - 1] = mine[Math.floor(rng('kecleon:' + day + suffix + ':' + dex)() * mine.length)];
     }
     return list;
+  }
+  /** Las 8 MT a la venta hoy; los cambios se guardan por cuenta y por día. */
+  function dailyTms() {
+    const s = save(), day = today(), dex = s && s.partner;
+    const rerolls = s && s.tmShop && s.tmShop.day === day ? s.tmShop.rerolls : 0;
+    const list = dailyTmsAt(day, dex, rerolls);
+    if (!rerolls || Object.keys(G.TM_MOVES).length <= DAILY) return list;
+    const previous = dailyTmsAt(day, dex, rerolls - 1);
+    if (list.join(',') === previous.join(',')) {
+      const replacement = Object.keys(G.TM_MOVES).find(id => !list.includes(id));
+      const index = list.findIndex((id, i) => !dex || list.some((other, j) => i !== j && G.Mons.canLearn(dex, other)));
+      list[index < 0 ? 0 : index] = replacement;
+    }
+    return list;
+  }
+  function rerollDailyTms() {
+    const s = save();
+    if (!s) return { ok: false };
+    if (s.coins < TM_REROLL_PRICE) return { ok: false, error: 'No tienes Pokémonedas suficientes.' };
+    const day = today(), rerolls = s.tmShop && s.tmShop.day === day ? s.tmShop.rerolls : 0;
+    if (Object.keys(G.TM_MOVES).length <= DAILY) return { ok: false, error: 'No hay suficientes MT para cambiar la selección.' };
+    s.coins -= TM_REROLL_PRICE;
+    s.tmShop = { day, rerolls: rerolls + 1 };
+    G.DB.commit();
+    return { ok: true };
   }
   const tmPrice = id => G.TM_PRICE[id] || 400;
 
@@ -106,5 +131,5 @@ G.Shop = (() => {
     return { ok: true };
   }
 
-  return { ITEMS, ORDER, count, take, tmCount, takeTm, dailyTms, tmPrice, buy, buySkin, today };
+  return { ITEMS, ORDER, count, take, tmCount, takeTm, dailyTms, tmPrice, buy, buySkin, rerollDailyTms, tmRerollPrice: TM_REROLL_PRICE, today };
 })();

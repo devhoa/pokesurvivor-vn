@@ -1,4 +1,6 @@
 G.I18n.add({
+  'Más opciones en la tienda': 'Thêm lựa chọn trong cửa hàng',
+  'Ahora puedes cambiar las MT del día por 20 Pokémonedas.': 'Bạn có thể đổi các TM hôm nay với giá 20 xu Pokémon.',
   'No se pudo guardar la marca del ranking ({x}).': 'Không thể lưu thành tích bảng xếp hạng ({x}).',
   'Alojamiento web (GitHub Pages)': 'Dịch vụ lưu trữ web (GitHub Pages)',
   'Gratis': 'Miễn phí',

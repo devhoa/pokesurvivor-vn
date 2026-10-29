@@ -8,6 +8,8 @@
 (() => {
   const languages = ['fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'];
   const rows = [
+    ["Más opciones en la tienda", "Plus d’options dans la boutique", "Più opzioni nel negozio", "Mais opções na loja", "商店新增选项", "商店新增選項"],
+    ["Ahora puedes cambiar las MT del día por 20 Pokémonedas.", "Vous pouvez désormais changer les CT du jour pour 20 Poképièces.", "Ora puoi cambiare le MT del giorno per 20 Pokémonete.", "Agora você pode trocar as TMs do dia por 20 Pokémoedas.", "现在可以花费20宝可币刷新今日招式学习器。", "現在可以花費20寶可幣刷新今日招式學習器。"],
     ["Ajustes de Pokémon", "Ajustements des Pokémon", "Modifiche ai Pokémon", "Ajustes de Pokémon", "宝可梦属性调整", "寶可夢屬性調整"],
     ["Rayquaza ahora tiene ×5,52 de ataque físico y especial.", "Rayquaza a désormais une attaque physique et spéciale de ×5,52.", "Rayquaza ora ha attacco fisico e speciale ×5,52.", "Rayquaza agora tem ataque físico e especial ×5,52.", "烈空坐现在的物理和特殊攻击均为×5.52。", "烈空坐現在的物理和特殊攻擊均為×5.52。"],
     ["No se pudo guardar la marca del ranking ({x}).", "Impossible d’enregistrer le résultat du classement ({x}).", "Impossibile salvare il record in classifica ({x}).", "Não foi possível salvar o recorde no ranking ({x}).", "无法保存排行榜记录（{x}）。", "無法儲存排行榜紀錄（{x}）。"],
@@ -772,6 +774,7 @@
     ["Mochila", "Sac", "Borsa", "Mochila", "背包", "背包"],
     ["Objetos", "Objets", "Strumenti", "Itens", "道具", "道具"],
     ["MT de hoy", "CT du jour", "MT di oggi", "TMs de hoje", "今日招式学习器", "今日招式學習器"],
+    ["Cambiar MT", "Changer les CT", "Cambia MT", "Trocar TMs", "刷新招式学习器", "刷新招式學習器"],
     ["Cada día hay otras 8. Una MT enseña su ataque a un Pokémon que lo aprenda en los juegos, para siempre (se gasta al usarla).", "Il y en a 8 nouvelles chaque jour. Une CT apprend sa capacité pour toujours à un Pokémon qui l’apprend dans les jeux (elle est consommée).", "Ogni giorno ce ne sono 8 nuove. Una MT insegna la sua mossa per sempre a un Pokémon che la impara nei giochi (si consuma).", "Todo dia há 8 novos. Um TM ensina o golpe para sempre a um Pokémon que o aprende nos jogos (é gasto ao usar).", "每天会换8种。招式学习器能让在正作中可以学会该招式的宝可梦永久学会它（用后消失）。", "每天會換8種。招式學習器能讓在正作中可以學會該招式的寶可夢永久學會牠（用後消失）。"],
     ["MT", "CT", "MT", "TM", "招式学习器", "招式學習器"],
     ["tienes {x}", "tu en as {x}", "ne hai {x}", "você tem {x}", "已有 {x}", "已有 {x}"],

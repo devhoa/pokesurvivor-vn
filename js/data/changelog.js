@@ -6,6 +6,10 @@
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-10-30', title: ['Más opciones en la tienda', 'More shop options'], chg: [
+    ['Ahora puedes cambiar las MT del día por 20 Pokémonedas.',
+     'You can now reroll the day’s TMs for 20 PokéCoins.']
+  ]},
   { d: '2026-10-29', title: ['Ajustes de Pokémon', 'Pokémon balance changes'], chg: [
     ['Rayquaza ahora tiene ×5,52 de ataque físico y especial.',
      'Rayquaza now has ×5.52 physical and special attack.']

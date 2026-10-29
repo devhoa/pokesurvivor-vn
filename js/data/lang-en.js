@@ -908,6 +908,7 @@ G.I18n.add({
   "Mochila": "Bag",
   "Objetos": "Items",
   "MT de hoy": "Today’s TMs",
+  "Cambiar MT": "Reroll TMs",
   "Cada día hay otras 8. Una MT enseña su ataque a un Pokémon que lo aprenda en los juegos, para siempre (se gasta al usarla).": "There are 8 new ones every day. A TM teaches its move forever to a Pokémon that learns it in the games (it is used up).",
   "MT": "TM",
   "tienes {x}": "you have {x}",

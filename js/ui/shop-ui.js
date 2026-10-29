@@ -541,6 +541,15 @@ G.ShopUI = (() => {
         flyToBag(icon, from, key);
       };
     });
+    box.querySelectorAll('[data-tm-reroll]').forEach(b => {
+      b.onclick = () => {
+        const r = G.Shop.rerollDailyTms();
+        if (!r.ok) { if (r.error) G.UI.toast(G.T(r.error)); G.Audio.sfx('error'); return; }
+        G.Audio.sfx('buy');
+        G.UI.refreshCoins();
+        render();
+      };
+    });
     box.querySelectorAll('[data-skin]').forEach(b => {
       b.onclick = () => {
         const r = G.Shop.buySkin(b.dataset.skin);
@@ -571,7 +580,9 @@ G.ShopUI = (() => {
       const it = G.Shop.ITEMS[id];
       h += row(G.Icons.html(it.icon, 32), G.T(it.name) + mine(G.Shop.count(id)), G.T(it.desc), buyBtn(id, it.price));
     }
-    h += `</div><h3 style="margin:14px 0 6px">${G.T('MT de hoy')}</h3>
+    const rerollPrice = G.Shop.tmRerollPrice;
+    h += `</div><div class="row between" style="margin:14px 0 6px"><h3 style="margin:0">${G.T('MT de hoy')}</h3>
+      <button class="btn small gold" data-tm-reroll data-sfx="none" ${s.coins < rerollPrice ? 'disabled' : ''}>${G.T('Cambiar MT')} ${coin(rerollPrice)}</button></div>
       <p class="sub" style="margin:0 0 8px">${G.T('Cada día hay otras 8. Una MT enseña su ataque a un Pokémon que lo aprenda en los juegos, para siempre (se gasta al usarla).')}</p><div class="upg">`;
     for (const id of G.Shop.dailyTms()) {
       const m = G.Moves.BY_ID[id];

@@ -185,6 +185,7 @@ G.I18n.add({
   "Mochila": "Ba Lô",
   "Objetos": "Vật phẩm",
   "MT de hoy": "TM hôm nay",
+  "Cambiar MT": "Đổi lượt TM",
   "Cada día hay otras 8. Una MT enseña su ataque a un Pokémon que lo aprenda en los juegos, para siempre (se gasta al usarla).": "Mỗi ngày sẽ có 8 TM khác. Một TM dạy vĩnh viễn chiêu thức của nó cho Pokémon có thể học chiêu đó trong các trò chơi (dùng xong sẽ hết).",
   "MT": "TM",
   "tienes {x}": "bạn có {x}",
