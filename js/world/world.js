@@ -85,8 +85,8 @@ G.World = (() => {
     const d = Math.hypot(tx, ty);
     if (d < 9) return FLOOR;                          // claro inicial
     const ramp = G.U.clamp((d - 9) / 8, 0, 1);       // aparición suave
-    if (fbm(tx / 13, ty / 13, seed + 101) < 0.02 + 0.15 * ramp) return LIQUID;
-    if (fbm(tx / 8, ty / 8, seed + 202) > 1 - 0.18 * ramp) return WALL;
+    if (fbm(tx / 13, ty / 13, seed + 101) < 0.01 + 0.07 * ramp) return LIQUID;
+    if (fbm(tx / 8, ty / 8, seed + 202) > 1 - 0.08 * ramp) return WALL;
     return FLOOR;
   }
 
@@ -153,7 +153,6 @@ G.World = (() => {
       }
 
       const h = H(tx, ty, seed + 404);
-      const grove = fbm(tx / 10, ty / 10, seed + 505) > 0.6;
       let type = null, kind = 0;
       // Interactivos (raros), lejos del claro del principio.
       const hs = H(tx, ty, seed + 909);
@@ -162,11 +161,11 @@ G.World = (() => {
         kind = Math.floor(H(tx, ty, seed + 910) * (type === 'altar' ? 4 : 3));
       }
       if (type) { /* ya elegido */ }
-      else if (open && h < (grove ? 0.02 : 0.002)) type = 'tree';
-      else if (open && h > 0.996) type = 'rock';
+      else if (open && h < 0.002) type = 'tree';
+      else if (open && h > 0.999) type = 'rock';
       // Halloween: calabazas por todo el mapa (mismo sitio para todos: va con la semilla).
       else if (open && h > (menuHw ? 0.955 : 0.972) && h <= 0.985 && G.Halloween && G.Halloween.inRun) type = 'pumpkin';
-      else if (open && h > 0.985 && h <= 0.992 && H(tx, ty, seed + 606) < 0.03) type = 'chest';
+      else if (open && h > 0.985 && h <= 0.992 && H(tx, ty, seed + 606) < 0.01) type = 'chest';
       else if (fbm(tx / 5, ty / 5, seed + 707) > 0.62 && H(tx, ty, seed + 808) < 0.78) type = 'grass';
       if (!type) continue;
 

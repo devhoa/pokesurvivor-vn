@@ -11,7 +11,7 @@ G.I18n.add({
   'Versión de pruebas: la partida sólo se guarda en este navegador. Juega en devhoa.github.io/pokesurvivor-vn/.': 'Phiên bản thử nghiệm: tiến trình chỉ được lưu trong trình duyệt này. Hãy chơi tại devhoa.github.io/pokesurvivor-vn/.',
   'Si otra web mete el juego dentro de su página (por ejemplo, para poner anuncios alrededor), sale un aviso con un botón para abrir la dirección de juego de este proyecto.': 'Nếu trang web khác nhúng trò chơi vào trang của họ (chẳng hạn để đặt quảng cáo xung quanh), thông báo sẽ xuất hiện cùng nút mở địa chỉ chơi của dự án này.',
   'Más espacio para moverse': 'Không gian di chuyển rộng rãi hơn',
-  'Se redujo aún más la cantidad de árboles, rocas y terreno bloqueado para facilitar el movimiento.': 'Cây cối, đá và địa hình không thể đi qua đã được giảm thêm để di chuyển thuận tiện hơn.',
+  'Los árboles aparecen como máximo en el 0,2 % de las casillas aptas, también en las zonas de bosque.': 'Cây xuất hiện nhiều nhất trên 0,2% ô phù hợp, kể cả trong khu vực rừng.',
   'Más vegetación en el mapa': 'Bản đồ có thêm nhiều cây cối',
   'Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.': 'Trên bản đồ giờ có thêm nhiều cây và cỏ cao, nhưng vẫn giữ lối đi thông thoáng.',
   'Si falla la carga de amigos, ahora se muestra el error y puedes reintentar en vez de ver una lista vacía.': 'Nếu tải danh sách bạn bè thất bại, lỗi sẽ được hiển thị và bạn có thể thử lại thay vì chỉ thấy danh sách trống.',
