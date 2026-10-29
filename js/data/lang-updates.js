@@ -8,6 +8,8 @@
 (() => {
   const languages = ['fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'];
   const rows = [
+    ["Más espacio para moverse", "Plus d’espace pour se déplacer", "Più spazio per muoversi", "Mais espaço para se movimentar", "更宽敞的移动空间", "更寬敞的移動空間"],
+    ["Hay menos árboles en el mapa para que no bloqueen tanto el paso.", "Il y a moins d’arbres sur la carte pour qu’ils bloquent moins souvent le passage.", "Ci sono meno alberi sulla mappa, così intralciano meno il passaggio.", "Há menos árvores no mapa para que elas bloqueiem menos a passagem.", "地图上的树木减少了，通行时不再那么容易被挡住。", "地圖上的樹木減少了，通行時不再那麼容易被擋住。"],
     ["Más vegetación en el mapa", "Plus de végétation sur la carte", "Più vegetazione sulla mappa", "Mais vegetação no mapa", "地图植被增加", "地圖植被增加"],
     ["Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.", "Plus d’arbres et d’herbes hautes apparaissent désormais sur la carte, sans encombrer les chemins.", "Ora sulla mappa compaiono più alberi ed erba alta, senza riempire i sentieri.", "Agora há mais árvores e grama alta pelo mapa, sem bloquear os caminhos.", "地图上现在会出现更多树木和高草，同时不会堵塞道路。", "地圖上現在會出現更多樹木和高草，同時不會堵塞道路。"],
     ["Amigos: las invitaciones para jugar ya pueden crear la sala y dejar entrar al amigo invitado.", "Amis : les invitations à jouer peuvent désormais créer la salle et permettre à l’ami invité de la rejoindre.", "Amici: gli inviti a giocare ora possono creare la stanza e permettere all’amico invitato di entrare.", "Amigos: os convites para jogar agora podem criar a sala e permitir que o amigo convidado entre.", "好友：现在可以通过游戏邀请创建房间，并让受邀好友加入。", "好友：現在可以透過遊戲邀請建立房間，並讓受邀好友加入。"],

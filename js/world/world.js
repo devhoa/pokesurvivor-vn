@@ -162,7 +162,7 @@ G.World = (() => {
         kind = Math.floor(H(tx, ty, seed + 910) * (type === 'altar' ? 4 : 3));
       }
       if (type) { /* ya elegido */ }
-      else if (open && h < (grove ? 0.18 : 0.018)) type = 'tree';
+      else if (open && h < (grove ? 0.08 : 0.008)) type = 'tree';
       else if (open && h > 0.992) type = 'rock';
       // Halloween: calabazas por todo el mapa (mismo sitio para todos: va con la semilla).
       else if (open && h > (menuHw ? 0.955 : 0.972) && h <= 0.985 && G.Halloween && G.Halloween.inRun) type = 'pumpkin';
