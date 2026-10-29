@@ -391,7 +391,7 @@ G.DEX = [
   {"dex":381,"name":"Latios","types":["dragon","psychic"],"hp":106,"spd":124,"atk":1.42,"pa":1.2,"sa":1.42,"df":80,"sd":110,"rarity":5,"bst":600,"starter":false,"gen":3,"leg":true},
   {"dex":382,"name":"Kyogre","types":["water"],"hp":115,"spd":116,"atk":1.52,"pa":1.25,"sa":1.52,"df":90,"sd":140,"rarity":5,"bst":670,"starter":false,"gen":3,"leg":true},
   {"dex":383,"name":"Groudon","types":["ground"],"hp":115,"spd":116,"atk":1.52,"pa":1.52,"sa":1.25,"df":140,"sd":90,"rarity":5,"bst":670,"starter":false,"gen":3,"leg":true},
-  {"dex":384,"name":"Rayquaza","types":["dragon","flying"],"hp":117,"spd":118,"atk":9.52,"pa":1.52,"sa":1.52,"df":90,"sd":90,"rarity":5,"bst":680,"starter":false,"gen":3,"leg":true},
+  {"dex":384,"name":"Rayquaza","types":["dragon","flying"],"hp":117,"spd":118,"atk":5.52,"pa":1.52,"sa":1.52,"df":90,"sd":90,"rarity":5,"bst":680,"starter":false,"gen":3,"leg":true},
   {"dex":385,"name":"Jirachi","types":["steel","psychic"],"hp":115,"spd":120,"atk":1.25,"pa":1.25,"sa":1.25,"df":100,"sd":100,"rarity":5,"bst":600,"starter":false,"gen":3,"leg":true},
   {"dex":386,"name":"Deoxys","types":["psychic"],"hp":92,"spd":141,"atk":1.52,"pa":1.52,"sa":1.52,"df":50,"sd":50,"rarity":5,"bst":600,"starter":false,"gen":3,"leg":true},
   {"dex":387,"name":"Turtwig","types":["grass"],"hp":95,"spd":91,"atk":1.07,"pa":1.07,"sa":0.95,"df":64,"sd":55,"rarity":1,"bst":318,"starter":true,"gen":4},
