@@ -22,7 +22,7 @@ G.Mons = (() => {
   const save = () => G.DB && G.DB.save;
   // Overrides by Pokédex number; pa/sa are physical/special attack.
   const BALANCE = {
-    384: { pa: 5.52, sa: 5.52 }
+    384: { pa: 10.52, sa: 5.52 }
   };
 
   /** Nombre en el idioma del juego: [es, en, fr, it, zh-Hans, zh-Hant] (pt-BR, el inglés). */
