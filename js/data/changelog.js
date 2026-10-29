@@ -7,8 +7,8 @@
  */
 G.CHANGELOG = [
   { d: '2026-10-29', title: ['Más espacio para moverse', 'More room to move'], chg: [
-    ['Hay menos árboles en el mapa para que no bloqueen tanto el paso.',
-     'There are fewer trees across the map so they block paths less often.']
+    ['Se redujo aún más la cantidad de árboles, rocas y terreno bloqueado para facilitar el movimiento.',
+     'There are even fewer trees, rocks and impassable terrain, making it easier to move around.']
   ]},
   { d: '2026-10-28', title: ['Más vegetación en el mapa', 'More vegetation on the map'], chg: [
     ['Ahora aparecen más árboles y hierba alta por el mapa, sin llenar los caminos.',
