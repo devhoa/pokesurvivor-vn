@@ -20,6 +20,10 @@
 G.Mons = (() => {
   const HIDDEN_RATE = 1 / 20;
   const save = () => G.DB && G.DB.save;
+  // Overrides by Pokédex number; pa/sa are physical/special attack.
+  const BALANCE = {
+    384: { pa: 5.52, sa: 5.52 }
+  };
 
   /** Nombre en el idioma del juego: [es, en, fr, it, zh-Hans, zh-Hant] (pt-BR, el inglés). */
   const LANG_I = { es: 0, en: 1, fr: 2, it: 3, 'pt-BR': 1, 'zh-Hans': 4, 'zh-Hant': 5 };
@@ -63,6 +67,7 @@ G.Mons = (() => {
     const n = natureOf(dex), m = Object.assign({}, base);
     if (n.up) m[n.up] = base[n.up] * 1.1;
     if (n.down) m[n.down] = base[n.down] * 0.9;
+    Object.assign(m, BALANCE[dex]);
     m.atk = Math.max(m.pa, m.sa);
     m.nature = n.id;
     return m;

@@ -6,6 +6,10 @@
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-10-29', title: ['Ajustes de Pokémon', 'Pokémon balance changes'], chg: [
+    ['Rayquaza ahora tiene ×5,52 de ataque físico y especial.',
+     'Rayquaza now has ×5.52 physical and special attack.']
+  ]},
   { d: '2026-10-29', title: ['Más espacio para moverse', 'More room to move'], chg: [
     ['Los árboles aparecen como máximo en el 0,2 % de las casillas aptas, también en las zonas de bosque.',
      'Trees now appear on at most 0.2% of suitable tiles, including in forest areas.']

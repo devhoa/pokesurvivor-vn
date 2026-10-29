@@ -10,6 +10,8 @@ G.I18n.add({
   'Esta dirección no está autorizada para guardar en la nube. La partida sólo se guarda en este navegador. Juega en devhoa.github.io/pokesurvivor-vn/.': 'Địa chỉ này không được phép lưu trò chơi trên đám mây. Tiến trình chỉ được lưu trong trình duyệt này. Hãy chơi tại devhoa.github.io/pokesurvivor-vn/.',
   'Versión de pruebas: la partida sólo se guarda en este navegador. Juega en devhoa.github.io/pokesurvivor-vn/.': 'Phiên bản thử nghiệm: tiến trình chỉ được lưu trong trình duyệt này. Hãy chơi tại devhoa.github.io/pokesurvivor-vn/.',
   'Si otra web mete el juego dentro de su página (por ejemplo, para poner anuncios alrededor), sale un aviso con un botón para abrir la dirección de juego de este proyecto.': 'Nếu trang web khác nhúng trò chơi vào trang của họ (chẳng hạn để đặt quảng cáo xung quanh), thông báo sẽ xuất hiện cùng nút mở địa chỉ chơi của dự án này.',
+  'Ajustes de Pokémon': 'Điều chỉnh chỉ số Pokémon',
+  'Rayquaza ahora tiene ×5,52 de ataque físico y especial.': 'Rayquaza hiện có chỉ số tấn công vật lý và đặc biệt ×5,52.',
   'Más espacio para moverse': 'Không gian di chuyển rộng rãi hơn',
   'Los árboles aparecen como máximo en el 0,2 % de las casillas aptas, también en las zonas de bosque.': 'Cây xuất hiện nhiều nhất trên 0,2% ô phù hợp, kể cả trong khu vực rừng.',
   'Más vegetación en el mapa': 'Bản đồ có thêm nhiều cây cối',

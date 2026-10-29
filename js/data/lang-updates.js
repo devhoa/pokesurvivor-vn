@@ -8,6 +8,8 @@
 (() => {
   const languages = ['fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'];
   const rows = [
+    ["Ajustes de Pokémon", "Ajustements des Pokémon", "Modifiche ai Pokémon", "Ajustes de Pokémon", "宝可梦属性调整", "寶可夢屬性調整"],
+    ["Rayquaza ahora tiene ×5,52 de ataque físico y especial.", "Rayquaza a désormais une attaque physique et spéciale de ×5,52.", "Rayquaza ora ha attacco fisico e speciale ×5,52.", "Rayquaza agora tem ataque físico e especial ×5,52.", "烈空坐现在的物理和特殊攻击均为×5.52。", "烈空坐現在的物理和特殊攻擊均為×5.52。"],
     ["Más espacio para moverse", "Plus d’espace pour se déplacer", "Più spazio per muoversi", "Mais espaço para se movimentar", "更宽敞的移动空间", "更寬敞的移動空間"],
     ["Los árboles aparecen como máximo en el 0,2 % de las casillas aptas, también en las zonas de bosque.", "Les arbres apparaissent sur au plus 0,2 % des cases adaptées, y compris dans les zones forestières.", "Gli alberi compaiono al massimo nello 0,2% delle caselle adatte, anche nelle zone boschive.", "As árvores aparecem em no máximo 0,2% dos espaços adequados, inclusive nas áreas de floresta.", "树木最多只会出现在0.2%的适宜地块上，森林区域也一样。", "樹木最多只會出現在0.2%的適合地塊上，森林區域也一樣。"],
     ["Más vegetación en el mapa", "Plus de végétation sur la carte", "Più vegetazione sulla mappa", "Mais vegetação no mapa", "地图植被增加", "地圖植被增加"],
