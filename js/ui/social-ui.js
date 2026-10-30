@@ -195,7 +195,8 @@
       if (m.uid === room.host) return 'Anfitrión';
       if (!room.isHost) return m.uid === G.Social.uid ? 'Tú' : 'En la sala';
       const mode = G.Net.mode(m.uid);
-      return mode === 'direct' ? (G.Net.viaTurn(m.uid) ? 'Conectado (por servidor)' : 'Conectado') : mode === 'relay' ? 'Conectado (por servidor)' : mode === 'failed' ? 'No se pudo conectar (reintentando…)' : 'Conectando…';
+      return G.Net.ready(m.uid) ? (G.Net.viaTurn(m.uid) ? 'Conectado (por servidor)' : 'Conectado')
+        : mode === 'failed' ? 'No se pudo conectar (reintentando…)' : 'Conectando…';
     }
 
     function render() {
@@ -255,12 +256,13 @@
 
       const btn = $('lobby-start');
       btn.classList.toggle('hidden', !room.isHost);
-      const connecting = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'connecting');
+      const connecting = ms.some(m => m.uid !== room.host && !G.Net.ready(m.uid) && G.Net.mode(m.uid) !== 'failed');
       const failed = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'failed');
-      btn.disabled = !room.isHost || ms.length < 2 || connecting || failed;
+      btn.disabled = !room.isHost || ms.length < 2 || room.lost || connecting || failed;
       btn.textContent = 'Empezar partida (' + ms.length + '/' + G.Social.MAX_PLAYERS + ')';
       $('lobby-note').textContent = !room.isHost ? 'Cuando el anfitrión empiece, entraréis todos a la vez.'
         : ms.length < 2 ? 'Necesitas al menos un amigo en la sala.'
+        : room.lost ? 'Reconectando con la sala…'
         : failed ? 'No se puede conectar con algún amigo: su red (o la tuya) no deja jugar en grupo. Probad con otra wifi o datos móviles; se reintenta solo.'
         : connecting ? 'Conectando con tus amigos…' : 'La partida empieza para todos a la vez.';
     }
@@ -268,6 +270,11 @@
     function start() {
       const room = G.Social.room;
       if (!room || !room.isHost || room.members.length < 2) return;
+      if (room.lost || room.members.some(m => m.uid !== room.host && !G.Net.ready(m.uid))) {
+        render();
+        G.UI.toast('Espera a que todos los amigos aparezcan conectados antes de empezar.');
+        return;
+      }
       const cfg = {
         k: 'start', seed: Math.floor(Math.random() * 1e6), host: room.host, hw: G.Halloween.on,   // hw: ¿partida de Halloween?
         members: room.members.map(m => ({ uid: m.uid, name: m.name, dex: m.dex, shiny: !!m.shiny }))

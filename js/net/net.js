@@ -191,7 +191,10 @@ G.Net = (() => {
       else if (!iceT) iceT = setTimeout(flushIce, ICE_BATCH);
     };
     pc.onconnectionstatechange = () => {
-      if (pc.connectionState === 'failed' && p.mode !== 'closed') useRelay(u);
+      if (pc.connectionState === 'failed' && p.mode !== 'closed') {
+        if (p.mode === 'direct') p.mode = 'connecting';
+        useRelay(u);
+      }
     };
     // Si en unos segundos no hay canal directo, se sigue por el relé.
     p.timer = setTimeout(() => { if (p.mode === 'connecting') useRelay(u); }, p.turn ? TURN_TIMEOUT : DIRECT_TIMEOUT);
@@ -371,6 +374,11 @@ G.Net = (() => {
     on(fn) { handlers.add(fn); }, off(fn) { handlers.delete(fn); },
     onPeer(fn) { peerHandlers.add(fn); },
     mode(u) { const p = peers.get(u); return p ? p.mode : 'closed'; },
+    ready(u) {
+      const p = peers.get(u);
+      return !!(p && p.mode === 'direct' && p.dc && p.dc.readyState === 'open' &&
+        (!p.pc || (p.pc.connectionState !== 'failed' && p.pc.connectionState !== 'closed')));
+    },
     /** ¿Conectado pero pasando por el TURN propio? */
     viaTurn(u) { const p = peers.get(u); return !!(p && p.mode === 'direct' && p.viaTurn); },
     /** ¿Va por el relé (o no hay conexión)? Entonces se manda menos a menudo. */

@@ -1,4 +1,6 @@
 G.I18n.add({
+  'Conexión más clara en el grupo': 'Kết nối chơi nhóm rõ ràng hơn',
+  'La sala ya no permite empezar hasta confirmar que cada amigo tiene abierto el canal directo de juego; así no se confunde estar en la sala con poder jugar.': 'Phòng chơi chỉ cho bắt đầu khi xác nhận kết nối chơi trực tiếp với tất cả bạn bè; tránh nhầm việc có mặt trong phòng với việc đã sẵn sàng chơi.',
   'Más opciones en la tienda': 'Thêm lựa chọn trong cửa hàng',
   'Ahora puedes cambiar las MT del día por 20 Pokémonedas.': 'Bạn có thể đổi các TM hôm nay với giá 20 xu Pokémon.',
   'Con cada cambio aumenta el peso de selección de las MT de los tipos de tu Pokémon elegido, hasta ×4.': 'Mỗi lần đổi sẽ tăng trọng số chọn TM thuộc hệ của Pokémon bạn chọn, tối đa ×4.',

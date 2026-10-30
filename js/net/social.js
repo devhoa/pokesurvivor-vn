@@ -450,6 +450,7 @@ G.Social = (() => {
     detachRoom();
     room.lost = true;
     room.tries = 0;
+    emit('room');
     rejoin(id);
   }
 

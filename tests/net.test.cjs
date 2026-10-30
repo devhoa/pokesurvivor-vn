@@ -68,7 +68,7 @@ test('bounded deterministic random numeric payloads round-trip', () => {
   }
 });
 
-function network() {
+function network(autoOpen = true) {
   const pcs = [], relay = [], G = { NetCodec: codec(), DB: { fb: { uid: 'host', rtdb: {
     ref: p => ({ on() {}, off() {}, set: s => { relay.push([slotted(p), s]); return Promise.resolve(); } })
   } } } };
@@ -83,7 +83,7 @@ function network() {
   }
   new Function('G', 'RTCPeerConnection', 'setTimeout', 'clearTimeout', source('js/net/net.js'))(G, PC, () => 1, () => {});
   G.Net.open('test', true, 'host'); G.Net.syncMembers(['host', 'a', 'b']);
-  for (const pc of pcs) pc.dc.onopen();
+  if (autoOpen) for (const pc of pcs) pc.dc.onopen();
   const cap = dc => dc.onmessage({ data: JSON.stringify({ k: 'net-cap', binary: 1 }) });
   return { N: G.Net, pcs, relay, cap };
 }
@@ -126,6 +126,19 @@ test('reconnect resets capability, so a replaced/old peer never receives binary'
   N.close(); N.open('next', true, 'host'); N.syncMembers(['host', 'a']);
   const dc = pcs.at(-1).dc; dc.onopen(); N.send('a', frame());
   assert.equal(typeof dc.sent.at(-1), 'string');
+});
+test('peer readiness requires an open direct data channel and a healthy connection', () => {
+  const { N, pcs } = network(false), pc = pcs[0], dc = pc.dc;
+  assert.equal(N.ready('a'), false);
+  pc.connectionState = 'connected';
+  dc.onopen();
+  assert.equal(N.ready('a'), true);
+  pc.connectionState = 'failed';
+  assert.equal(N.ready('a'), false);
+  pc.connectionState = 'connected';
+  dc.readyState = 'closed';
+  assert.equal(N.ready('a'), false);
+  assert.equal(N.ready('missing'), false);
 });
 test('representative busy host payload saves at least 30%; all savings are lossless', () => {
   for (const n of [30, 100, 300, 600]) {
