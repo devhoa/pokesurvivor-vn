@@ -8,6 +8,19 @@
 (() => {
   const languages = ['fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'];
   const rows = [
+    ["Inicio de partida en grupo", "Démarrage de partie coop", "Avvio della partita cooperativa", "Início da partida cooperativa", "开始合作游戏", "開始合作遊戲"],
+    ["El botón de empezar permanece visible en la sala; sólo el anfitrión puede usarlo y se activa cuando todos están conectados.", "Le bouton de démarrage reste visible dans le salon ; seul l’hôte peut l’utiliser et il s’active lorsque tout le monde est connecté.", "Il pulsante di avvio resta visibile nella stanza; solo l’host può usarlo e si attiva quando tutti sono connessi.", "O botão de iniciar permanece visível na sala; só o anfitrião pode usá-lo e ele é ativado quando todos estão conectados.", "房间中的开始按钮会保持显示；只有房主可以使用，并会在所有人连接后启用。", "房間中的開始按鈕會保持顯示；只有房主可以使用，並會在所有人連線後啟用。"],
+    ["Canjear Giftcode", "Utiliser un code cadeau", "Riscatta codice regalo", "Resgatar Giftcode", "兑换礼品码", "兌換禮品碼"],
+    ["Escribe tu giftcode", "Saisissez votre code cadeau", "Inserisci il codice regalo", "Digite seu Giftcode", "输入礼品码", "輸入禮品碼"],
+    ["Canjear", "Utiliser", "Riscatta", "Resgatar", "兑换", "兌換"],
+    ["Canjeando…", "Utilisation…", "Riscatto…", "Resgatando…", "正在兑换…", "正在兌換…"],
+    ["¡Código canjeado! +500 monedas y +100 tickets del gacha.", "Code utilisé ! +500 pièces et +100 tickets de tirage.", "Codice riscattato! +500 monete e +100 biglietti gacha.", "Código resgatado! +500 moedas e +100 tickets de gacha.", "兑换成功！获得500金币和100张扭蛋券。", "兌換成功！獲得500金幣和100張扭蛋券。"],
+    ["El código no es válido.", "Code invalide.", "Codice non valido.", "Código inválido.", "礼品码无效。", "禮品碼無效。"],
+    ["Este código ya se canjeó en esta cuenta.", "Ce code a déjà été utilisé sur ce compte.", "Questo codice è già stato riscattato su questo account.", "Este código já foi resgatado nesta conta.", "此账号已兑换过该礼品码。", "此帳號已兌換過此禮品碼。"],
+    ["Inicia sesión con una cuenta online para canjearlo.", "Connectez-vous à un compte en ligne pour utiliser ce code.", "Accedi con un account online per riscattare il codice.", "Entre em uma conta online para resgatar o código.", "请登录在线账号后兑换。", "請登入線上帳號後兌換。"],
+    ["No se pudo canjear el código ({x}).", "Impossible d’utiliser le code ({x}).", "Impossibile riscattare il codice ({x}).", "Não foi possível resgatar o código ({x}).", "无法兑换礼品码（{x}）。", "無法兌換禮品碼（{x}）。"],
+    ["Giftcode de bienvenida", "Code cadeau de bienvenue", "Codice regalo di benvenuto", "Giftcode de boas-vindas", "欢迎礼品码", "歡迎禮品碼"],
+    ["Canjea WELCOME2026 desde Perfil para recibir 500 Pokémonedas y 100 tickets de gacha, una vez por cuenta.", "Utilisez WELCOME2026 depuis le profil pour recevoir 500 Poképièces et 100 tickets de tirage, une fois par compte.", "Riscatta WELCOME2026 dal profilo per ricevere 500 Pokémonete e 100 biglietti gacha, una volta per account.", "Resgate WELCOME2026 no perfil para receber 500 Pokémoedas e 100 tickets de gacha, uma vez por conta.", "在个人资料中兑换 WELCOME2026，即可获得500宝可币和100张扭蛋券，每个账号限领一次。", "在個人資料中兌換 WELCOME2026，即可獲得500寶可幣和100張扭蛋券，每個帳號限領一次。"],
     ["Estado de conexión de amigos", "État de connexion des amis", "Stato di connessione degli amici", "Status de conexão dos amigos", "好友连接状态", "好友連線狀態"],
     ["La lista de amigos muestra en verde quién está en línea y en rojo quién está desconectado.", "La liste d’amis indique en vert les personnes en ligne et en rouge celles qui sont déconnectées.", "La lista amici mostra in verde chi è online e in rosso chi è disconnesso.", "A lista de amigos mostra em verde quem está online e em vermelho quem está desconectado.", "好友列表用绿色显示在线好友，用红色显示已离线好友。", "好友清單以綠色顯示在線好友，以紅色顯示已離線好友。"],
     ["Conexión más clara en el grupo", "Connexion coop plus claire", "Connessione co-op più chiara", "Conexão cooperativa mais clara", "更清晰的合作连接状态", "更清楚的合作連線狀態"],

@@ -203,7 +203,8 @@
       const room = G.Social.room;
       if (!room) return;
       const ms = room.members;
-      $('lobby-sub').textContent = room.isHost
+      const isHost = room.host === G.Social.uid;
+      $('lobby-sub').textContent = isHost
         ? 'Eres el anfitrión. Invita a tus amigos (hasta ' + G.Social.MAX_PLAYERS + ') y empezad cuando estéis.'
         : 'Estás en la sala de ' + ((ms.find(m => m.uid === room.host) || {}).name || '…') + '. El anfitrión empezará la partida.';
 
@@ -234,7 +235,7 @@
       });
 
       // Invitar (sólo el anfitrión y si queda sitio).
-      const canInvite = room.isHost && ms.length < G.Social.MAX_PLAYERS;
+      const canInvite = isHost && ms.length < G.Social.MAX_PLAYERS;
       $('lobby-inv-title').classList.toggle('hidden', !canInvite);
       const inv = $('lobby-invite');
       inv.classList.toggle('hidden', !canInvite);
@@ -256,12 +257,11 @@
       }
 
       const btn = $('lobby-start');
-      btn.classList.toggle('hidden', !room.isHost);
       const connecting = ms.some(m => m.uid !== room.host && !G.Net.ready(m.uid) && G.Net.mode(m.uid) !== 'failed');
       const failed = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'failed');
-      btn.disabled = !room.isHost || ms.length < 2 || room.lost || connecting || failed;
+      btn.disabled = !isHost || ms.length < 2 || room.lost || connecting || failed;
       btn.textContent = 'Empezar partida (' + ms.length + '/' + G.Social.MAX_PLAYERS + ')';
-      $('lobby-note').textContent = !room.isHost ? 'Cuando el anfitrión empiece, entraréis todos a la vez.'
+      $('lobby-note').textContent = !isHost ? 'Cuando el anfitrión empiece, entraréis todos a la vez.'
         : ms.length < 2 ? 'Necesitas al menos un amigo en la sala.'
         : room.lost ? 'Reconectando con la sala…'
         : failed ? 'No se puede conectar con algún amigo: su red (o la tuya) no deja jugar en grupo. Probad con otra wifi o datos móviles; se reintenta solo.'
@@ -270,7 +270,7 @@
 
     function start() {
       const room = G.Social.room;
-      if (!room || !room.isHost || room.members.length < 2) return;
+      if (!room || room.host !== G.Social.uid || room.members.length < 2) return;
       if (room.lost || room.members.some(m => m.uid !== room.host && !G.Net.ready(m.uid))) {
         render();
         G.UI.toast('Espera a que todos los amigos aparezcan conectados antes de empezar.');

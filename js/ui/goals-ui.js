@@ -179,10 +179,68 @@
       if (!titles.length) box.insertAdjacentHTML('beforeend', '<p class="note">Consigue logros para desbloquear títulos.</p>');
 
       const prev = document.createElement('button');
-      prev.className = 'btn gold'; prev.style.marginTop = '16px';
-      prev.textContent = 'Ver mi perfil público';
+      prev.className = 'btn gold';
+      prev.textContent = G.T('Ver mi perfil público');
       prev.onclick = () => G.ProfileUI.showData(G.Social.profileData());
-      box.appendChild(prev);
+      const redeem = document.createElement('button');
+      redeem.className = 'btn gold';
+      redeem.textContent = G.T('Canjear Giftcode');
+      const actions = document.createElement('div');
+      actions.className = 'row';
+      actions.style.cssText = 'gap:8px;flex-wrap:wrap;margin-top:16px';
+      actions.append(prev, redeem);
+      box.appendChild(actions);
+
+      const redeemForm = document.createElement('form');
+      redeemForm.className = 'row';
+      redeemForm.style.cssText = 'gap:8px;flex-wrap:wrap;margin-top:10px';
+      redeemForm.hidden = true;
+      const input = document.createElement('input');
+      input.className = 'field';
+      input.type = 'text';
+      input.maxLength = 32;
+      input.autocomplete = 'off';
+      input.autocapitalize = 'characters';
+      input.spellcheck = false;
+      input.placeholder = G.T('Escribe tu giftcode');
+      input.setAttribute('aria-label', G.T('Escribe tu giftcode'));
+      input.style.maxWidth = '320px';
+      const submit = document.createElement('button');
+      submit.className = 'btn gold';
+      submit.type = 'submit';
+      submit.textContent = G.T('Canjear');
+      const status = document.createElement('span');
+      status.className = 'sub';
+      status.setAttribute('role', 'status');
+      redeemForm.append(input, submit, status);
+      box.appendChild(redeemForm);
+      redeem.onclick = () => {
+        redeemForm.hidden = !redeemForm.hidden;
+        if (!redeemForm.hidden) input.focus();
+      };
+      redeemForm.onsubmit = async e => {
+        e.preventDefault();
+        submit.disabled = true;
+        status.style.color = '';
+        status.textContent = G.T('Canjeando…');
+        const result = await G.DB.redeemGiftcode(input.value);
+        if (result.ok) {
+          status.textContent = G.T('¡Código canjeado! +500 monedas y +100 tickets del gacha.');
+          input.value = '';
+          input.disabled = true;
+          G.Audio.sfx('buy');
+          G.UI.refreshCoins();
+        } else {
+          const messages = {
+            invalid: G.T('El código no es válido.'),
+            used: G.T('Este código ya se canjeó en esta cuenta.'),
+            account: G.T('Inicia sesión con una cuenta online para canjearlo.')
+          };
+          status.textContent = messages[result.reason] || G.I18n.f('No se pudo canjear el código ({x}).', result.reason);
+          status.style.color = '#ffb0b8';
+          submit.disabled = false;
+        }
+      };
     }
 
     function pickFav(i) {

@@ -38,6 +38,20 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
     }
 
+    match /giftcodeClaims/{userId}/codes/{code} {
+      allow get: if owns(userId);
+      allow list: if false;
+      allow create: if owns(userId)
+        && code == 'WELCOME2026'
+        && request.resource.data.keys().hasAll(['code', 'coins', 't1', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['code', 'coins', 't1', 'createdAt'])
+        && request.resource.data.code == code
+        && request.resource.data.coins == 500
+        && request.resource.data.t1 == 100
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
     match /profiles/{userId} {
       allow read: if signedIn();
       allow create, update: if owns(userId)

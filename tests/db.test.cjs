@@ -7,9 +7,10 @@ const path = require('node:path');
 const vm = require('node:vm');
 const SRC = fs.readFileSync(path.join(__dirname, '..', 'js/core/db.js'), 'utf8');
 
-let NOW = 1e12, cloud = null, down = false, writes = 0;
+let NOW = 1e12, cloud = null, down = false, writes = 0, claims = new Map();
 const clone = o => JSON.parse(JSON.stringify(o));
 const ref = {
+  kind: 'save',
   async get() { if (down) throw { code: 'unavailable' }; return { exists: !!cloud, data: () => clone(cloud) }; },
   async set(d, o) {
     const next = Object.assign(cloud ? clone(cloud) : {});
@@ -22,6 +23,14 @@ const ref = {
     cloud = next; writes++;
   }
 };
+const claimRef = key => ({
+  kind: 'claim', key,
+  async get() {
+    if (down) throw { code: 'unavailable' };
+    const data = claims.get(key);
+    return { exists: !!data, data: () => clone(data) };
+  }
+});
 const TABS = new Map();   // navegador (su localStorage) -> eventos 'storage' de cada pestaña
 function tab(store) {
   if (!TABS.has(store)) TABS.set(store, []);
@@ -32,7 +41,36 @@ function tab(store) {
     removeItem: k => store.delete(k), key: i => [...store.keys()][i], get length() { return store.size; }
   };
   const auth = { setPersistence: async () => {}, useEmulator() {}, onAuthStateChanged: cb => { Promise.resolve().then(() => cb({ uid: 'U1', displayName: 'Ash' })); return () => {}; } };
-  const db = { useEmulator() {}, settings() {}, collection: () => ({ doc: () => ref }) };
+  const db = {
+    useEmulator() {}, settings() {},
+    collection(name) {
+      return { doc(id) {
+        if (name === 'saves') return ref;
+        if (name === 'giftcodeClaims') return { collection: () => ({ doc: code => claimRef(id + '/' + code) }) };
+        throw Error('Unexpected collection: ' + name);
+      } };
+    },
+    async runTransaction(work) {
+      const staged = [];
+      const result = await work({
+        get: target => target.get(),
+        set: (target, data, options) => staged.push({ target, data: clone(data), options })
+      });
+      if (!result.ok) return result;
+      if (staged.some(w => w.target.kind === 'claim' && claims.has(w.target.key))) throw { code: 'already-exists' };
+      const saveWrite = staged.find(w => w.target.kind === 'save');
+      if (saveWrite) {
+        const next = Object.assign(cloud ? clone(cloud) : {});
+        for (const f of saveWrite.options.mergeFields) next[f] = clone(saveWrite.data[f]);
+        next.updatedAt = NOW;
+        if (cloud && next.rev !== cloud.rev + 1) throw { code: 'permission-denied' };
+        cloud = next;
+      }
+      for (const w of staged) if (w.target.kind === 'claim') claims.set(w.target.key, w.data);
+      writes += staged.length;
+      return result;
+    }
+  };
   const G = { FIREBASE_CONFIG: { apiKey: 'x', projectId: 'p', emulator: true } };
   const ctx = {
     G, localStorage, console: { warn() {}, log: console.log }, TextEncoder, setTimeout: fn => timers.push(fn), clearTimeout() {},
@@ -56,7 +94,50 @@ async function act(t, op) {
   else { t.DB.save.tickets.t1 += op; t.DB.commit(); }
   await settle();
 }
-const reset = () => { cloud = null; down = false; TABS.clear(); };
+const reset = () => { cloud = null; down = false; writes = 0; claims = new Map(); TABS.clear(); };
+
+test('giftcode grants its fixed reward once and saves it atomically to the cloud', async () => {
+  reset();
+  const A = await open(new Map());
+  const first = await A.DB.redeemGiftcode(' welcome2026 ');
+  assert.equal(first.ok, true);
+  assert.equal(first.reward.coins, 500);
+  assert.equal(first.reward.t1, 100);
+  assert.equal(A.DB.save.coins, 1000);
+  assert.equal(A.DB.save.tickets.t1, 100);
+  assert.equal(cloud.save.coins, 1000);
+  assert.equal(cloud.save.tickets.t1, 100);
+  assert.equal(cloud.rev, 1);
+  assert.equal(claims.size, 1);
+
+  const duplicate = await A.DB.redeemGiftcode('WELCOME2026');
+  assert.equal(duplicate.ok, false);
+  assert.equal(duplicate.reason, 'used');
+  assert.equal(A.DB.save.coins, 1000);
+  assert.equal(A.DB.save.tickets.t1, 100);
+
+  const B = await open(new Map());
+  assert.equal(B.DB.save.coins, 1000);
+  assert.equal(B.DB.save.tickets.t1, 100);
+  const otherDevice = await B.DB.redeemGiftcode('WELCOME2026');
+  assert.equal(otherDevice.ok, false);
+  assert.equal(otherDevice.reason, 'used');
+  assert.equal(B.DB.save.coins, 1000);
+  assert.equal(B.DB.save.tickets.t1, 100);
+});
+
+test('invalid giftcodes do not change the save or create a claim', async () => {
+  reset();
+  const A = await open(new Map());
+  const result = await A.DB.redeemGiftcode('NOT-A-CODE');
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'invalid');
+  assert.equal((await A.DB.redeemGiftcode('toString')).reason, 'invalid');
+  assert.equal(A.DB.save.coins, 500);
+  assert.equal(A.DB.save.tickets.t1, 0);
+  assert.equal(cloud, null);
+  assert.equal(claims.size, 0);
+});
 
 test('lo ganado aquí sin guardar se sube aunque otro aparato guardara después', async () => {
   reset();

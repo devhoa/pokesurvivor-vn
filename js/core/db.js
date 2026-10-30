@@ -29,6 +29,7 @@ G.DB = (() => {
   const K_CLOUD = 'ps.cloud.', K_MIGRATED = 'ps.migrated.';
   const VERSION = 3;
   const START_COINS = 500;
+  const GIFTCODES = { WELCOME2026: { coins: 500, t1: 100 } };
   const SDK = 'https://www.gstatic.com/firebasejs/13.0.0/';
   const NAME_DOMAIN = 'jugadores.pokesurvivor.net';   // sólo para el email interno
 
@@ -789,6 +790,64 @@ G.DB = (() => {
     return { ok: false, why: syncState === 'offline' ? 'offline' : 'fail' };
   }
 
+  async function redeemGiftcode(raw) {
+    const code = String(raw || '').trim().toUpperCase();
+    const reward = Object.prototype.hasOwnProperty.call(GIFTCODES, code) ? GIFTCODES[code] : null;
+    if (!reward) return { ok: false, reason: 'invalid' };
+    if (mode !== 'cloud' || guest || !uid || !save || !fs) return { ok: false, reason: 'account' };
+
+    const owner = uid, localSave = plain(save);
+    const claimRef = fs.collection('giftcodeClaims').doc(owner).collection('codes').doc(code);
+    try {
+      const result = await fs.runTransaction(async tx => {
+        const [claim, remote] = await Promise.all([tx.get(claimRef), tx.get(docRef())]);
+        if (claim.exists) return { ok: false, reason: 'used' };
+
+        const body = remote.exists && remote.data().save
+          ? merge(localSave, migrate(plain(remote.data().save)))
+          : migrate(plain(localSave));
+        const ledger = ledOf(body, DEV);
+        addTo(ledger, 'gift_' + code, 'c', reward.coins);
+        addTo(ledger, 'gift_' + code, 't1', reward.t1);
+        body.led = ledger;
+        body.coins += reward.coins;
+        body.tickets.t1 += reward.t1;
+        fold(body);
+        body.updated = Math.max(Date.now(), (localSave.updated || 0) + 1);
+
+        const nextRev = (remote.exists ? Number(remote.data().rev) || 0 : 0) + 1;
+        tx.set(claimRef, {
+          code,
+          coins: reward.coins,
+          t1: reward.t1,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        tx.set(docRef(), {
+          save: plain(body),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          v: VERSION,
+          rev: nextRev
+        }, { mergeFields: ['save', 'updatedAt', 'v', 'rev'] });
+        return { ok: true, body: plain(body), rev: nextRev };
+      });
+
+      if (!result.ok) return result;
+      if (uid === owner && save) {
+        applyInPlace(merge(result.body, plain(save)));
+        write(K_CLOUD + uid, save);
+        setRev(result.rev);
+        sentCanon = sameKey(result.body);
+        pending = sameKey(plain(fold(save))) !== sentCanon;
+        setSync(pending ? 'pending' : 'ok');
+        if (G.UI && G.UI.refreshCoins) G.UI.refreshCoins();
+      }
+      return { ok: true, reward };
+    } catch (e) {
+      console.warn('[DB] no se pudo canjear el giftcode:', e.code || e.message);
+      return { ok: false, reason: e.code || 'error' };
+    }
+  }
+
   /*
    * Sales del juego (lo minimizas, cambias de app o de pestaña) con un Guardar
    * que estaba esperando: se sube ya, en cuanto lo dejan las reglas. Es la
@@ -1045,7 +1104,7 @@ G.DB = (() => {
   }
 
   return {
-    ready, register, login, loginWithGoogle, playAsGuest, logout, commit, deleteAccount, flush: pushNow, saveNow,
+    ready, register, login, loginWithGoogle, playAsGuest, logout, commit, deleteAccount, flush: pushNow, saveNow, redeemGiftcode,
     owns, grant, ownsShiny, grantShiny, merge, setName, upgradesOf, isFav, setFav,
     onSync(fn) { listeners.add(fn); },
     onLeave(fn) { leaveHooks.push(fn); },

@@ -6,6 +6,14 @@
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-10-31', title: ['Inicio de partida en grupo', 'Co-op game start'], fix: [
+    ['El botón de empezar permanece visible en la sala; sólo el anfitrión puede usarlo y se activa cuando todos están conectados.',
+     'The start button stays visible in the lobby; only the host can use it, and it becomes enabled when everyone is connected.']
+  ]},
+  { d: '2026-10-31', title: ['Giftcode de bienvenida', 'Welcome gift code'], new: [
+    ['Canjea WELCOME2026 desde Perfil para recibir 500 Pokémonedas y 100 tickets de gacha, una vez por cuenta.',
+     'Redeem WELCOME2026 from Profile to receive 500 PokéCoins and 100 single-pull tickets, once per account.']
+  ]},
   { d: '2026-10-31', title: ['Estado de conexión de amigos', 'Friend connection status'], new: [
     ['La lista de amigos muestra en verde quién está en línea y en rojo quién está desconectado.',
      'The friends list shows who is online in green and who is offline in red.']
