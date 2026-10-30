@@ -8,6 +8,8 @@
 (() => {
   const languages = ['fr', 'it', 'pt-BR', 'zh-Hans', 'zh-Hant'];
   const rows = [
+    ["Estado de conexión de amigos", "État de connexion des amis", "Stato di connessione degli amici", "Status de conexão dos amigos", "好友连接状态", "好友連線狀態"],
+    ["La lista de amigos muestra en verde quién está en línea y en rojo quién está desconectado.", "La liste d’amis indique en vert les personnes en ligne et en rouge celles qui sont déconnectées.", "La lista amici mostra in verde chi è online e in rosso chi è disconnesso.", "A lista de amigos mostra em verde quem está online e em vermelho quem está desconectado.", "好友列表用绿色显示在线好友，用红色显示已离线好友。", "好友清單以綠色顯示在線好友，以紅色顯示已離線好友。"],
     ["Conexión más clara en el grupo", "Connexion coop plus claire", "Connessione co-op più chiara", "Conexão cooperativa mais clara", "更清晰的合作连接状态", "更清楚的合作連線狀態"],
     ["La sala ya no permite empezar hasta confirmar que cada amigo tiene abierto el canal directo de juego; así no se confunde estar en la sala con poder jugar.", "Le salon attend désormais que chaque ami ait un canal de jeu direct ouvert avant de démarrer : être dans le salon ne signifie plus que la connexion est prête.", "La stanza ora attende che ogni amico abbia un canale di gioco diretto aperto prima di iniziare, così la presenza nella stanza non viene confusa con la connessione pronta.", "A sala agora espera que cada amigo tenha um canal direto de jogo aberto antes de começar, para não confundir presença na sala com conexão pronta.", "现在只有确认每位好友都已打开游戏直连通道后，房间才会开始，避免把加入房间误当成已准备就绪。", "現在只有確認每位好友都已開啟遊戲直連通道後，房間才會開始，避免把加入房間誤當成已準備就緒。"],
     ["Más opciones en la tienda", "Plus d’options dans la boutique", "Più opzioni nel negozio", "Mais opções na loja", "商店新增选项", "商店新增選項"],

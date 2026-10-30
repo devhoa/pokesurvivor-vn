@@ -639,6 +639,7 @@ input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border-radius: 
 .fr-row .st { color: var(--muted); font-size: 13px; }
 .dot { width: 10px; height: 10px; border-radius: 2px; background: #6b7a94; flex: 0 0 10px; }
 .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.dot.off { background: #ff5f6d; box-shadow: 0 0 6px #ff5f6d; }
 .dot.play { background: var(--gold); }
 .dot.pend { background: var(--r4); }
 #fr-add { margin: 10px 0 0; }

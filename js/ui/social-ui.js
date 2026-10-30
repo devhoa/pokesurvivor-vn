@@ -80,10 +80,10 @@
       });
     }
 
-    // (Sin "en línea" desde el 20-10-2026: costaba 1/4 de las escrituras de Firestore.)
     function stateText(f) {
       if (f.status === 'in') return 'Quiere ser tu amigo';
       if (f.status === 'out') return 'Solicitud enviada';
+      if (f.status === 'ok') return f.online === true ? 'En línea' : f.online === false ? 'Desconectado' : 'Conectando…';
       return '';
     }
 
@@ -117,9 +117,9 @@
       for (const f of list) {
         const el = document.createElement('div');
         el.className = 'fr-row';
-        const dot = f.status !== 'ok' ? 'pend' : 'on';
+        const dot = f.status !== 'ok' ? 'pend' : f.online === true ? 'on' : f.online === false ? 'off' : '';
         const inRoom = room && room.members.some(m => m.uid === f.uid);
-        el.innerHTML = `<i class="dot ${dot}"></i><b translate="no"><a href="#" class="plink" title="Ver su perfil">${esc(f.name)}</a></b><span class="st">${inRoom ? 'En tu sala' : stateText(f)}</span><span class="grow"></span>`;
+        el.innerHTML = `<i class="dot ${dot}" title="${G.T(stateText(f))}"></i><b translate="no"><a href="#" class="plink" title="Ver su perfil">${esc(f.name)}</a></b><span class="st">${inRoom ? 'En tu sala' : G.T(stateText(f))}</span><span class="grow"></span>`;
         if (f.status === 'ok') el.querySelector('.plink').onclick = e => { e.preventDefault(); G.ProfileUI.show(f.uid); };
         else el.querySelector('.plink').onclick = e => e.preventDefault();
         const btn = (txt, cls, fn) => {
@@ -245,7 +245,8 @@
         for (const f of free) {
           const el = document.createElement('div');
           el.className = 'fr-row';
-          el.innerHTML = `<i class="dot on"></i><b translate="no">${esc(f.name)}</b><span class="grow"></span>`;
+          const dot = f.online === true ? 'on' : f.online === false ? 'off' : '';
+          el.innerHTML = `<i class="dot ${dot}" title="${G.T(stateText(f))}"></i><b translate="no">${esc(f.name)}</b><span class="grow"></span>`;
           const b = document.createElement('button');
           b.className = 'btn small gold'; b.textContent = 'Invitar';
           b.onclick = async () => { const r = await G.Social.invite(f.uid); G.UI.toast(r.ok ? r.msg : r.error); };

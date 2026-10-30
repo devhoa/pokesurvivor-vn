@@ -6,16 +6,15 @@
  *     profiles/{uid}               { name, lower, at }   apodo público
  *     friendships/{uidA_uidB}      { users, from, to, status: 'pending'|'ok', names, at }
  *
- *     pres/{uid}                   (el "en línea", quitado el 20-10-2026: sólo se borra con la cuenta)
  *     inv/{para_de}                { to, from, room, name, at } invitaciones
  *
- *   Realtime Database: SÓLO mientras estás en una sala o partida en grupo
+ *   Realtime Database
+ *     presence/{uid}     true si está conectado; se borra con onDisconnect
  *     rooms/{id}          { host, open, at, m: { uid: { name, dex, shiny } }, q: ... }
  *                         la sala; q/ son los mensajes de net.js
  *
- * Por qué así: el plan gratuito de Firebase sólo admite 100 conexiones a la
- * vez a la Realtime Database. Si todo el mundo estuviera conectado, ése sería
- * el máximo de jugadores: sólo se conectan los que están en una sala.
+ * La presencia mantiene una conexión RTDB por cuenta online (máximo 100
+ * conexiones simultáneas en el plan actual); las salas usan esa misma conexión.
  *
  * El resto del juego escucha los cambios con G.Social.on(fn).
  */
@@ -47,7 +46,9 @@ G.Social = (() => {
   let friends = new Map();          // otherUid -> { uid, name, pid, status: 'ok'|'in'|'out', online, play }
   let unFriends = null;
   let friendsError = '';
-  let listening = false, unInv = null;  // listening: ya se ha puesto en marcha (online)
+  let listening = false, unInv = null, unPresence = null;
+  let presenceId = '';
+  const friendPresence = new Map();
   const sentInv = new Map();        // a quién invitaste: uid -> { room, at } (para retirarlo al salir)
   let room = null;                  // { id, host, isHost, members: [{ uid, name, dex, shiny }] }
   let roomRefs = [];
@@ -117,7 +118,7 @@ G.Social = (() => {
   }
 
   /*
-   * Amigos e invitaciones. Nada de esto usa la Realtime Database.
+   * Amistades e invitaciones usan Firestore; la presencia se publica en RTDB.
    * Desde el 20-10-2026 la lista de amigos NO se carga al entrar (1 lectura por
    * amigo en cada carga de la página, para todos): sólo al abrir Amigos, la sala
    * o el ranking de amigos (ensureFriends). Las invitaciones sí se escuchan desde
@@ -128,7 +129,10 @@ G.Social = (() => {
   function online() {
     if (listening) return;                    // ya estaba en marcha
     listening = true;
-    if (fb.rtdb) fb.rtdb.goOffline();         // se conecta sólo al entrar en una sala
+    if (fb.rtdb) {
+      fb.rtdb.goOnline();
+      watchOwnPresence();
+    }
     let known = false;
     try { known = localStorage.getItem(hasFrKey()) === '1'; } catch (e) { /* nada */ }
     if (known) listenInvites();
@@ -157,10 +161,49 @@ G.Social = (() => {
   let playing = false;
   /** ¿Tienes algún amigo confirmado? (si no, nadie te puede invitar) */
   const hasFriends = () => [...friends.values()].some(f => f.status === 'ok');
-  // El "en línea" de los amigos se quitó el 20-10-2026: era 1/4 de todas las
-  // escrituras de Firestore (unas 2 millones al día). Ya no se escribe ni se lee
-  // pres/{uid}; se puede invitar a cualquier amigo (la invitación caduca sola).
-  const presKey = () => 'ps.pres.' + uid;    // (sólo para borrar lo que quedó de entonces)
+  function watchOwnPresence() {
+    const rtdb = fb.rtdb, owner = uid;
+    presenceId = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+    const connectedRef = rtdb.ref('.info/connected');
+    const onConnection = snap => {
+      if (uid !== owner || !listening) return;
+      if (snap.val() !== true) {
+        for (const f of friends.values()) f.online = null;
+        emit('friends-presence');
+        return;
+      }
+      const ref = rtdb.ref('presence/' + owner + '/' + presenceId);
+      ref.onDisconnect().remove().then(() => {
+        if (uid === owner && listening) return ref.set(true);
+      }).catch(e => console.warn('[Social] presencia propia:', e.code || e.message));
+    };
+    connectedRef.on('value', onConnection, e => console.warn('[Social] conexión RTDB:', e.code || e.message));
+    unPresence = () => connectedRef.off('value', onConnection);
+  }
+
+  function syncFriendPresence() {
+    if (!fb || !fb.rtdb) return;
+    const wanted = new Set([...friends.values()].filter(f => f.status === 'ok').map(f => f.uid));
+    for (const [other, sub] of friendPresence) {
+      if (wanted.has(other)) continue;
+      sub.ref.off('value', sub.onValue);
+      friendPresence.delete(other);
+    }
+    for (const other of wanted) {
+      if (friendPresence.has(other)) continue;
+      const ref = fb.rtdb.ref('presence/' + other);
+      const onValue = snap => {
+        const f = friends.get(other);
+        if (!f) return;
+        const sessions = snap.val();
+        f.online = !!sessions && typeof sessions === 'object' && Object.values(sessions).some(v => v === true);
+        emit('friends-presence');
+      };
+      ref.on('value', onValue, e => console.warn('[Social] presencia de amigo:', e.code || e.message));
+      friendPresence.set(other, { ref, onValue });
+    }
+  }
+
   function setPlaying(p) {
     playing = !!p;
     // Al acabar la partida, la sala se vuelve a comprobar (los que se fueron, fuera).
@@ -172,8 +215,18 @@ G.Social = (() => {
     await leaveRoom().catch(() => {});
     if (unFriends) { unFriends(); unFriends = null; }
     if (unInv) { unInv(); unInv = null; }
+    if (unPresence) { unPresence(); unPresence = null; }
+    for (const sub of friendPresence.values()) sub.ref.off('value', sub.onValue);
+    friendPresence.clear();
     listening = false; friendsReady = null;
-    try { localStorage.removeItem(presKey()); } catch (e) { /* nada */ }
+    const oldFb = fb, oldUid = uid;
+    if (oldFb && oldFb.rtdb && oldUid) {
+      const ref = oldFb.rtdb.ref('presence/' + oldUid + '/' + presenceId);
+      await ref.onDisconnect().cancel().catch(e => console.warn('[Social] cancelar presencia:', e.code || e.message));
+      await ref.remove().catch(e => console.warn('[Social] borrar presencia:', e.code || e.message));
+      oldFb.rtdb.goOffline();
+    }
+    presenceId = '';
     if (why === 'delete') {
       try { localStorage.removeItem('ps.nick.' + uid); } catch (e) { /* nada */ }
       await deleteAll().catch(e => console.warn('[Social] borrar:', e));
@@ -193,7 +246,6 @@ G.Social = (() => {
     await step('invitaciones', () => del(fb.fs.collection('inv').where('to', '==', uid)));
     await step('marcas', () => del(fb.fs.collectionGroup('e').where('uids', 'array-contains', uid)));
     await step('partida en curso', () => fb.fs.collection('runs').doc(uid).delete());
-    await step('en línea', () => fb.fs.collection('pres').doc(uid).delete());
     await step('apodo', async () => {
       const prof = await fb.fs.collection('profiles').doc(uid).get();
       const lower = prof.exists ? prof.data().lower : me && me.name.toLowerCase();
@@ -217,10 +269,11 @@ G.Social = (() => {
         next.set(other, {
           uid: other, pid: id, name: (f.names && f.names[other]) || '???',
           status: f.status === 'ok' ? 'ok' : f.to === uid ? 'in' : 'out',
-          online: false, play: false, room: '', seen: 0
+          online: (friends.get(other) && friends.get(other).online) ?? null, play: false, room: '', seen: 0
         });
       }
       friends = next;
+      syncFriendPresence();
       friendsError = [...errors.values()][0] || '';
       emit('friends');
       // Con amigos ya te pueden invitar (y este navegador lo recuerda para la próxima vez).
@@ -308,14 +361,9 @@ G.Social = (() => {
     return { name: me.name, dex: s.partner, shiny: !!s.partnerShiny && G.DB.ownsShiny(s.partner), at: ts() };
   }
 
-  /**
-   * La Realtime Database sólo se conecta mientras estás en una sala: cada
-   * conexión abierta gasta descargas (se pagan a partir de 360 MB al día).
-   * (El 11-10-2026 hubo un contador de gente en línea que la tenía siempre
-   * conectada; se quitó por eso.)
-   */
+  /** Presence keeps RTDB connected while signed in; room traffic reuses it. */
   function rtOn() { if (fb.rtdb) fb.rtdb.goOnline(); }
-  function rtOff() { if (fb && fb.rtdb && !room) fb.rtdb.goOffline(); }
+  function rtOff() { if (fb && fb.rtdb && !room && !listening) fb.rtdb.goOffline(); }
 
   /*
    * Salas con límite (25-10-2026): el 23-10 una cuenta creada fuera del juego

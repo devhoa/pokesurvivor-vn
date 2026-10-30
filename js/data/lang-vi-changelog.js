@@ -1,4 +1,6 @@
 G.I18n.add({
+  'Estado de conexión de amigos': 'Trạng thái kết nối bạn bè',
+  'La lista de amigos muestra en verde quién está en línea y en rojo quién está desconectado.': 'Danh sách bạn bè hiển thị màu xanh khi bạn bè đang online và màu đỏ khi họ offline.',
   'Conexión más clara en el grupo': 'Kết nối chơi nhóm rõ ràng hơn',
   'La sala ya no permite empezar hasta confirmar que cada amigo tiene abierto el canal directo de juego; así no se confunde estar en la sala con poder jugar.': 'Phòng chơi chỉ cho bắt đầu khi xác nhận kết nối chơi trực tiếp với tất cả bạn bè; tránh nhầm việc có mặt trong phòng với việc đã sẵn sàng chơi.',
   'Más opciones en la tienda': 'Thêm lựa chọn trong cửa hàng',

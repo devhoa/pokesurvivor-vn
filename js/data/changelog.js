@@ -6,6 +6,10 @@
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-10-31', title: ['Estado de conexión de amigos', 'Friend connection status'], new: [
+    ['La lista de amigos muestra en verde quién está en línea y en rojo quién está desconectado.',
+     'The friends list shows who is online in green and who is offline in red.']
+  ]},
   { d: '2026-10-31', title: ['Conexión más clara en el grupo', 'Clearer co-op connections'], fix: [
     ['La sala ya no permite empezar hasta confirmar que cada amigo tiene abierto el canal directo de juego; así no se confunde estar en la sala con poder jugar.',
      'The lobby now waits until every friend has an open direct game channel before starting, so being in the room is not mistaken for being ready to play.']
