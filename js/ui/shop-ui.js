@@ -583,7 +583,8 @@ G.ShopUI = (() => {
     const rerollPrice = G.Shop.tmRerollPrice;
     h += `</div><div class="row between" style="margin:14px 0 6px"><h3 style="margin:0">${G.T('MT de hoy')}</h3>
       <button class="btn small gold" data-tm-reroll data-sfx="none" ${s.coins < rerollPrice ? 'disabled' : ''}>${G.T('Cambiar MT')} ${coin(rerollPrice)}</button></div>
-      <p class="sub" style="margin:0 0 8px">${G.T('Cada día hay otras 8. Una MT enseña su ataque a un Pokémon que lo aprenda en los juegos, para siempre (se gasta al usarla).')}</p><div class="upg">`;
+      <p class="sub" style="margin:0 0 8px">${G.T('Cada día hay otras 8. Una MT enseña su ataque a un Pokémon que lo aprenda en los juegos, para siempre (se gasta al usarla).')}</p>
+      <p class="sub" style="margin:0 0 8px">${G.T('Con cada cambio aumenta el peso de selección de las MT de los tipos de tu Pokémon elegido, hasta ×4.')}</p><div class="upg">`;
     for (const id of G.Shop.dailyTms()) {
       const m = G.Moves.BY_ID[id];
       const fits = partner && G.Mons.canLearn(partner, id);

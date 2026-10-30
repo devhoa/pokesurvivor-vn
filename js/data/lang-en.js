@@ -910,6 +910,7 @@ G.I18n.add({
   "MT de hoy": "Today’s TMs",
   "Cambiar MT": "Reroll TMs",
   "Cada día hay otras 8. Una MT enseña su ataque a un Pokémon que lo aprenda en los juegos, para siempre (se gasta al usarla).": "There are 8 new ones every day. A TM teaches its move forever to a Pokémon that learns it in the games (it is used up).",
+  "Con cada cambio aumenta el peso de selección de las MT de los tipos de tu Pokémon elegido, hasta ×4.": "Each reroll increases the selection weight of TMs matching your chosen Pokémon’s types, up to ×4.",
   "MT": "TM",
   "tienes {x}": "you have {x}",
   "{x} la puede aprender": "{x} can learn it",

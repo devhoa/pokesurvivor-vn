@@ -8,6 +8,7 @@
  * aparato no reaparece al fusionar con otro.
  *
  * MT a la venta: 8 cada día, iguales para todos (semilla: la fecha en España).
+ * Al cambiarlas, pesan más las de los tipos del compañero elegido (hasta ×4).
  * Si ninguna sirve a tu compañero, la última se cambia por una que sí aprenda.
  */
 G.Shop = (() => {
@@ -25,6 +26,8 @@ G.Shop = (() => {
   const ORDER = ['mint', 'cap', 'caph'];
   const DAILY = 8;
   const TM_REROLL_PRICE = 20;
+  const TM_TYPE_WEIGHT_STEP = 0.5;
+  const TM_TYPE_WEIGHT_MAX = 4;
 
   const save = () => G.DB.save;
 
@@ -61,8 +64,25 @@ G.Shop = (() => {
   function dailyTmsAt(day, dex, rerolls) {
     const suffix = rerolls ? ':reroll:' + rerolls : '';
     const all = Object.keys(G.TM_MOVES).sort(), r = rng('kecleon:' + day + suffix);
-    for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
-    const list = all.slice(0, DAILY);
+    const types = dex && G.DEX_BY[dex] ? G.DEX_BY[dex].types : [];
+    let list;
+    if (rerolls && types.length) {
+      const weight = Math.min(TM_TYPE_WEIGHT_MAX, 1 + rerolls * TM_TYPE_WEIGHT_STEP);
+      const pool = all.slice();
+      list = [];
+      while (list.length < DAILY && pool.length) {
+        const total = pool.reduce((sum, id) => sum + (types.includes(G.Moves.BY_ID[id].type) ? weight : 1), 0);
+        let target = r() * total, index = pool.length - 1;
+        for (let i = 0; i < pool.length; i++) {
+          target -= types.includes(G.Moves.BY_ID[pool[i]].type) ? weight : 1;
+          if (target < 0) { index = i; break; }
+        }
+        list.push(pool.splice(index, 1)[0]);
+      }
+    } else {
+      for (let i = all.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [all[i], all[j]] = [all[j], all[i]]; }
+      list = all.slice(0, DAILY);
+    }
     if (dex && !list.some(id => G.Mons.canLearn(dex, id))) {
       const mine = G.Mons.learnable(dex).sort();
       if (mine.length) list[DAILY - 1] = mine[Math.floor(rng('kecleon:' + day + suffix + ':' + dex)() * mine.length)];

@@ -25,6 +25,9 @@ G.Mons = (() => {
     384: { pa: 10.52, sa: 5.52 },
     798: { pa: 50.52, sa: 5.52 }
   };
+  const EXTRA_TMS = {
+    658: ['whirlpool']
+  };
 
   /** Nombre en el idioma del juego: [es, en, fr, it, zh-Hans, zh-Hant] (pt-BR, el inglés). */
   const LANG_I = { es: 0, en: 1, fr: 2, it: 3, 'pt-BR': 1, 'zh-Hans': 4, 'zh-Hant': 5 };
@@ -114,7 +117,11 @@ G.Mons = (() => {
   /** ¿Ya lo sabe sin MT (es de sus tipos)? */
   const natural = (dex, id) => G.Moves.poolFor(G.DEX_BY[dex], true).includes(id);
   /** MT que puede aprender (las que no sabe ya). */
-  function learnable(dex) { return G.TM_OF(dex).filter(id => G.Moves.BY_ID[id] && !natural(dex, id) && !taught(dex).includes(id)); }
+  function learnable(dex) {
+    const extra = EXTRA_TMS[dex] || [];
+    return [...new Set(G.TM_OF(dex).concat(extra))]
+      .filter(id => G.Moves.BY_ID[id] && (!natural(dex, id) || extra.includes(id)) && !taught(dex).includes(id));
+  }
   const canLearn = (dex, id) => learnable(dex).includes(id);
   /** Enseña una MT de la Mochila (se gasta). → true si se ha aprendido. */
   function teach(dex, id) {

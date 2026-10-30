@@ -1,6 +1,9 @@
 G.I18n.add({
   'Más opciones en la tienda': 'Thêm lựa chọn trong cửa hàng',
   'Ahora puedes cambiar las MT del día por 20 Pokémonedas.': 'Bạn có thể đổi các TM hôm nay với giá 20 xu Pokémon.',
+  'Con cada cambio aumenta el peso de selección de las MT de los tipos de tu Pokémon elegido, hasta ×4.': 'Mỗi lần đổi sẽ tăng trọng số chọn TM thuộc hệ của Pokémon bạn chọn, tối đa ×4.',
+  'Greninja ahora puede aprender Torbellino con una MT.': 'Greninja giờ có thể học Vòng Nước bằng TM.',
+  'Greninja puede elegir Acua Aro como movimiento inicial.': 'Greninja có thể chọn Vòng Nước làm chiêu thức khởi đầu.',
   'No se pudo guardar la marca del ranking ({x}).': 'Không thể lưu thành tích bảng xếp hạng ({x}).',
   'Alojamiento web (GitHub Pages)': 'Dịch vụ lưu trữ web (GitHub Pages)',
   'Gratis': 'Miễn phí',

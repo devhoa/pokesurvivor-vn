@@ -8,7 +8,13 @@
 G.CHANGELOG = [
   { d: '2026-10-30', title: ['Más opciones en la tienda', 'More shop options'], chg: [
     ['Ahora puedes cambiar las MT del día por 20 Pokémonedas.',
-     'You can now reroll the day’s TMs for 20 PokéCoins.']
+     'You can now reroll the day’s TMs for 20 PokéCoins.'],
+    ['Con cada cambio aumenta el peso de selección de las MT de los tipos de tu Pokémon elegido, hasta ×4.',
+     'Each reroll increases the selection weight of TMs matching your chosen Pokémon’s types, up to ×4.'],
+    ['Greninja ahora puede aprender Torbellino con una MT.',
+     'Greninja can now learn Whirlpool from a TM.'],
+    ['Greninja puede elegir Acua Aro como movimiento inicial.',
+     'Greninja can choose Aqua Ring as its starting move.']
   ]},
   { d: '2026-10-29', title: ['Ajustes de Pokémon', 'Pokémon balance changes'], chg: [
     ['Rayquaza ahora tiene ×5,52 de ataque físico y especial.',
