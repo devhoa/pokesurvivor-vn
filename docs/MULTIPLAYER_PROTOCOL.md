@@ -4,7 +4,7 @@ Based on main `803125dfdf3066fe6cf65f490f1e7b577871a295`.
 This change reduces application payload bytes, not message frequency. The
 existing reliable, ordered WebRTC data channel and 15 Hz direct update rate
 remain. When direct WebRTC fails, gameplay uses the existing Firebase Realtime
-Database message queue, limited to 3 frames/s, 12,000 bytes/frame and 24,000
+Database message queue, limited to 6 frames/s, 12,000 bytes/frame and 48,000
 frame bytes/s per recipient. Oversized or over-budget snapshots are skipped;
 the next full snapshot restores current state. The direct STUN-only path remains
 preferred. No TURN service or additional package is used.

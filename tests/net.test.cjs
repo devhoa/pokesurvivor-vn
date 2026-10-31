@@ -264,13 +264,13 @@ test.skip('removed TURN transport: relay is used after a direct connection fails
   N.syncMembers(['host', 'a', 'b', 'c']); await settle();
   assert.equal(pcs.at(-1).cfg.iceServers.length, 2, 'two failures: own network needs TURN');
 });
-test('direct failure enables relay with only free Google STUN and enforces per-peer frame caps', () => {
+test('direct failure enables relay with only free Google STUN and keeps relay frames smooth but bounded', () => {
   const { N, pcs, relay } = network(false), peer = pcs[0];
   assert.deepEqual(peer.cfg.iceServers, [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }]);
   peer.connectionState = 'failed'; peer.onconnectionstatechange();
   const frame = { k: 'f', p: [1, 2], ev: [] };
-  for (let i = 0; i < 4; i++) N.send('a', frame);
-  assert.equal(relay.length, 3);
+  for (let i = 0; i < 7; i++) N.send('a', frame);
+  assert.equal(relay.length, 6);
   assert.equal(N.stats.relayDropped, 1);
   assert.ok(relay.every(([, raw]) => raw.length <= 16000));
   assert.equal(N.ready('a'), true);

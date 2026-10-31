@@ -19,7 +19,10 @@ G.Net = (() => {
   const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
   const DIRECT_TIMEOUT = 9000;          // ms para conseguir canal
   const ALLOW_RELAY = true, RETRY_MS = 15000;
-  const RELAY_MAX_BYTES = 12000, RELAY_MAX_BYTES_PER_SECOND = 24000, RELAY_MAX_FRAMES_PER_SECOND = 3;
+  // El relé del servidor se usa como respaldo: más ancho que el viejo límite 3
+  // FPS, pero sigue acotado para no saturar la base de datos ni hacer que un
+  // jugador "se quede quieto" al perder el canal directo.
+  const RELAY_MAX_BYTES = 12000, RELAY_MAX_BYTES_PER_SECOND = 48000, RELAY_MAX_FRAMES_PER_SECOND = 6;
   const ICE_BATCH = 250, ICE_MAX = 40;    // candidatos: se juntan 250 ms (o 40) en un mensaje (ver newPeer)
 
 
