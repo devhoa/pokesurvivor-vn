@@ -126,6 +126,21 @@ test('giftcode grants its fixed reward once and saves it atomically to the cloud
   assert.equal(B.DB.save.tickets.t1, 100);
 });
 
+test('giftcode accepts the common 2026 shorthand and stores the canonical code once', async () => {
+  reset();
+  const A = await open(new Map());
+  const result = await A.DB.redeemGiftcode(' 2026 ');
+  assert.equal(result.ok, true);
+  assert.equal(result.reward.coins, 500);
+  assert.equal(result.reward.t1, 100);
+  assert.equal(A.DB.save.coins, 1000);
+  assert.equal(claims.has('U1/WELCOME2026'), true);
+
+  const duplicate = await A.DB.redeemGiftcode('welcome-2026');
+  assert.equal(duplicate.ok, false);
+  assert.equal(duplicate.reason, 'used');
+});
+
 test('invalid giftcodes do not change the save or create a claim', async () => {
   reset();
   const A = await open(new Map());

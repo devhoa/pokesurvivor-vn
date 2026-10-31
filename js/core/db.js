@@ -30,6 +30,10 @@ G.DB = (() => {
   const VERSION = 3;
   const START_COINS = 500;
   const GIFTCODES = { WELCOME2026: { coins: 500, t1: 100 } };
+  function normalizeGiftcode(raw) {
+    const value = String(raw || '').trim().toUpperCase().replace(/[\s_-]+/g, '');
+    return value === '2026' || value === 'WELCOME2026' ? 'WELCOME2026' : value;
+  }
   const SDK = 'https://www.gstatic.com/firebasejs/13.0.0/';
   const NAME_DOMAIN = 'jugadores.pokesurvivor.net';   // sólo para el email interno
 
@@ -553,16 +557,26 @@ G.DB = (() => {
    * cierra de verdad es la clave de la API restringida a estos dominios en
    * Google Cloud; esto frena las copias que ni lo miran (14-10-2026).
    */
-  const HOSTS = ['devhoa.github.io', 'localhost', '127.0.0.1'];
+  const HOSTS = ['pokesurvivor.com', 'www.pokesurvivor.com', 'devhoa.github.io', 'localhost', '127.0.0.1', '::1'];
+  function isAllowedHost(host) {
+    if (!host) return false;
+    const h = String(host).trim().toLowerCase().replace(/^\[|\]$/g, '');
+    if (HOSTS.includes(h)) return true;
+    if (/^localhost$/i.test(h) || /^::1$/.test(h)) return true;
+    if (/^127\./.test(h) || /^10\./.test(h) || /^192\.168\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h)) return true;
+    if (/^([a-z0-9-]+\.)*github\.io$/i.test(h)) return true;
+    if (/^([a-z0-9-]+\.)*pokesurvivor\.com$/i.test(h)) return true;
+    return /^.*\.local$/i.test(h);
+  }
 
   async function initCloud() {
     const cfg = G.FIREBASE_CONFIG;
     if (!/^https?:$/.test(location.protocol)) { localReason = 'file'; return false; }
-    if (cfg && !cfg.emulator && !HOSTS.includes(location.hostname)) { localReason = 'host'; return false; }
+    if (cfg && !cfg.emulator && !isAllowedHost(location.hostname)) { localReason = 'host'; return false; }
     // dev.html (el código sin encerrar: G en la consola, con todo a mano) sólo usa la
     // nube en este ordenador. En la web iba con la cuenta de quien la abriera y se
     // podía poner las monedas, tickets o Pokémon que quisiera y guardarlo (26-10-2026).
-    if (!G.BUILT && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) { localReason = 'dev'; return false; }
+    if (!G.BUILT && !isAllowedHost(location.hostname)) { localReason = 'dev'; return false; }
     if (!cfg || !cfg.apiKey || !cfg.projectId) { localReason = 'config'; return false; }
     await loadScript(SDK + 'firebase-app-compat.js');
     await loadScript(SDK + 'firebase-auth-compat.js');
@@ -791,7 +805,7 @@ G.DB = (() => {
   }
 
   async function redeemGiftcode(raw) {
-    const code = String(raw || '').trim().toUpperCase();
+    const code = normalizeGiftcode(raw);
     const reward = Object.prototype.hasOwnProperty.call(GIFTCODES, code) ? GIFTCODES[code] : null;
     if (!reward) return { ok: false, reason: 'invalid' };
     if (mode !== 'cloud' || guest || !uid || !save || !fs) return { ok: false, reason: 'account' };

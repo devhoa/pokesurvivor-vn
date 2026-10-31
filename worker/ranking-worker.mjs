@@ -1,11 +1,18 @@
 const API = 'https://firestore.googleapis.com/v1';
 const AUTH_LOOKUP = 'https://identitytoolkit.googleapis.com/v1/accounts:lookup';
 const OAUTH = 'https://oauth2.googleapis.com/token';
-const ALLOWED_ORIGINS = new Set([
-  'https://pokesurvivor.com',
-  'https://www.pokesurvivor.com',
-  'https://devhoa.github.io'
-]);
+function isAllowedOrigin(origin) {
+  if (!origin) return false;
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    if (host === 'pokesurvivor.com' || host === 'www.pokesurvivor.com' || host === 'devhoa.github.io') return true;
+    if (/^([a-z0-9-]+\.)*github\.io$/i.test(host)) return true;
+    if (/^([a-z0-9-]+\.)*pokesurvivor\.com$/i.test(host)) return true;
+    if (host === 'localhost' || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host)
+      || /^172\.(1[6-9]|2\d|3[01])\./.test(host) || /^.*\.local$/i.test(host) || host === '::1') return true;
+    return false;
+  } catch { return false; }
+}
 const TOP = 50;
 const TOP_ONLY = new Set(['d', 'w', 'm', 'p']);
 const PERIODS = ['d', 'w', 'm', 'a'];
@@ -400,7 +407,7 @@ class HttpError extends Error {
 
 async function handle(request, env) {
   const origin = request.headers.get('origin') || '';
-  if (!ALLOWED_ORIGINS.has(origin)) return json({ error: 'origin_denied' }, 403);
+  if (!isAllowedOrigin(origin)) return json({ error: 'origin_denied' }, 403);
   const headers = cors(origin);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (request.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, headers);
