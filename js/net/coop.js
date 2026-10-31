@@ -22,6 +22,7 @@
  *   anfitrión -> todos     { k:'start', seed, host, members:[{uid,name,dex,shiny}] }
  */
 G.Coop = (() => {
+  const DEBUG = typeof location !== 'undefined' && /[?&](debug-net|debug-coop)\b/.test(location.search);
   const ANIMS = ['Idle', 'Walk', 'Attack', 'Shoot', 'Charge', 'Hurt', 'Faint'];
   const COLORS = ['#ffcb3d', '#5fc8ff', '#7ee07a', '#ff8ad8'];
   // Mensajes por segundo: 15 por la conexión directa y 6 por el relé limitado
@@ -243,6 +244,7 @@ G.Coop = (() => {
       e: slowRelay ? enemies.slice(0, 10) : enemies,
       ev: slowRelay ? ev.slice(-24) : ev
     };
+    if (DEBUG) console.log('[Coop][hostFrame]', { to: m.uid, slowRelay, enemyCount: frame.e.length, evCount: frame.ev.length, xp: frame.xp, lv: frame.lv });
     if (!slowRelay) {
       const ja = G.Judgment.netState();
       if (ja) frame.ja = ja;
@@ -307,6 +309,7 @@ G.Coop = (() => {
 
   G.Net.on((from, msg) => {
     if (!msg) return;
+    if (DEBUG && msg.k === 'f') console.log('[Coop][net-msg]', { from, active, host, myUid: me, hostUid, slow: G.Net.slow(from), evCount: Array.isArray(msg.ev) ? msg.ev.length : 0, enemyCount: Array.isArray(msg.e) ? msg.e.length : 0, xp: msg.xp, lv: msg.lv });
     if (msg.k === 'start') { if (G.Flow.startCoop) G.Flow.startCoop(msg); return; }
     if (!active || msg.k !== 'f') return;
     if (host) onClientFrame(from, msg); else if (from === hostUid) onHostFrame(msg);
@@ -453,6 +456,7 @@ G.Coop = (() => {
   });
 
   function onHostFrame(msg) {
+    if (DEBUG) console.log('[Coop][onHostFrame]', { xp: msg.xp, lv: msg.lv, evCount: (msg.ev || []).length, enemyCount: (msg.e || []).length, time: msg.t });
     lastHostAt = performance.now();
     if (stalled) { stalled = false; updateAway(); }
     for (const ev of msg.ev || []) applyHostEvent(ev);
