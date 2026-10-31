@@ -1,0 +1,8 @@
+# PokéSurvivor
+User-agent: *
+Allow: /
+Disallow: /tools/
+Disallow: /docs/
+Disallow: /dev.html
+
+Sitemap: https://devhoa.github.io/pokesurvivor-vn/sitemap.xml

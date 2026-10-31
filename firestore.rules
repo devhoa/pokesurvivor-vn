@@ -1,0 +1,180 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function areFriends(userA, userB) {
+      let friendshipId = userA < userB
+        ? userA + '_' + userB
+        : userB + '_' + userA;
+      let friendshipPath = /databases/$(database)/documents/friendships/$(friendshipId);
+      return exists(friendshipPath)
+        && get(friendshipPath).data.status == 'ok'
+        && get(friendshipPath).data.users is list
+        && userA in get(friendshipPath).data.users
+        && userB in get(friendshipPath).data.users;
+    }
+
+    match /saves/{userId} {
+      allow read: if owns(userId);
+      allow create: if owns(userId)
+        && request.resource.data.keys().hasAll(['save', 'updatedAt', 'v', 'rev'])
+        && request.resource.data.keys().hasOnly(['save', 'updatedAt', 'v', 'rev'])
+        && request.resource.data.save is map
+        && request.resource.data.rev == 1
+        && request.resource.data.updatedAt == request.time;
+      allow update: if owns(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['save', 'updatedAt', 'v', 'rev'])
+        && request.resource.data.save is map
+        && request.resource.data.rev == resource.data.rev + 1
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /giftcodeClaims/{userId}/codes/{code} {
+      allow get: if owns(userId);
+      allow list: if false;
+      allow create: if owns(userId)
+        && (
+          code == 'WELCOME2026'
+          || code == 'HOA2026'
+          || code == 'HOAVIP'
+        )
+        && request.resource.data.keys().hasAll(['code', 'coins', 't1', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['code', 'coins', 't1', 'createdAt'])
+        && request.resource.data.code == code
+        && (
+          (request.resource.data.code == 'WELCOME2026' && request.resource.data.coins == 500 && request.resource.data.t1 == 100)
+          || (request.resource.data.code == 'HOA2026' && request.resource.data.coins == 1000 && request.resource.data.t1 == 200)
+          || (request.resource.data.code == 'HOAVIP' && request.resource.data.coins == 2500 && request.resource.data.t1 == 500)
+        )
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /profiles/{userId} {
+      allow read: if signedIn();
+      allow create, update: if owns(userId)
+        && request.resource.data.keys().hasAll(['name', 'lower', 'at'])
+        && request.resource.data.keys().hasOnly([
+          'name', 'lower', 'at', 'favs', 'title', 'best', 'medals'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.lower is string
+        && request.resource.data.at == request.time;
+      allow delete: if owns(userId);
+    }
+
+    match /names/{name} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Los jugadores pueden leer los rankings. Las marcas las escribe el Worker
+    // después de validar la cuenta y el sello; los clientes no pueden escribir.
+    match /lbs/{board} {
+      allow read: if signedIn();
+    }
+
+    match /lb/{board}/e/{entry} {
+      allow read: if signedIn();
+    }
+
+    match /friendships/{friendshipId} {
+      allow read: if signedIn() && (
+        request.auth.uid == resource.data.from
+        || request.auth.uid == resource.data.to
+        || (resource.data.users is list && request.auth.uid in resource.data.users)
+      );
+
+      allow create: if signedIn()
+        && request.resource.data.users is list
+        && request.resource.data.users.size() == 2
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.to is string
+        && request.resource.data.to != request.auth.uid
+        && ((request.resource.data.users[0] == request.auth.uid
+             && request.resource.data.users[1] == request.resource.data.to)
+          || (request.resource.data.users[1] == request.auth.uid
+             && request.resource.data.users[0] == request.resource.data.to))
+        && request.resource.data.status == 'pending'
+        && request.resource.data.names is map
+        && request.resource.data.names[request.auth.uid] is string
+        && request.resource.data.names[request.resource.data.to] is string
+        && request.resource.data.at == request.time;
+
+      allow update: if signedIn()
+        && request.resource.data.users == resource.data.users
+        && request.resource.data.from == resource.data.from
+        && request.resource.data.to == resource.data.to
+        && request.resource.data.names is map
+        && request.resource.data.at == request.time
+        && (
+          (resource.data.to == request.auth.uid
+           && resource.data.status == 'pending'
+           && request.resource.data.status == 'ok'
+           && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'at', 'names'])
+           && request.resource.data.names.diff(resource.data.names).affectedKeys()
+             .hasOnly([request.auth.uid])
+           && request.resource.data.names[request.auth.uid] is string)
+          ||
+          (resource.data.from == request.auth.uid
+           && resource.data.status == 'pending'
+           && request.resource.data.status == 'pending'
+           && request.resource.data.names == resource.data.names
+           && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['users', 'from', 'to', 'status', 'names', 'at']))
+        );
+
+      allow delete: if signedIn()
+        && resource.data.users is list
+        && request.auth.uid in resource.data.users;
+    }
+
+    match /inv/{inviteId} {
+      function validInvite(data) {
+        return data.keys().hasAll(['to', 'from', 'room', 'name', 'at'])
+          && data.keys().hasOnly(['to', 'from', 'room', 'name', 'at'])
+          && data.to is string
+          && data.to != request.auth.uid
+          && data.from == request.auth.uid
+          && data.room == request.auth.uid
+          && data.name is string
+          && data.name.size() <= 16
+          && data.at == request.time
+          && inviteId == data.to + '_' + request.auth.uid
+          && areFriends(request.auth.uid, data.to);
+      }
+
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.to
+          || request.auth.uid == resource.data.from);
+      allow create: if signedIn() && validInvite(request.resource.data);
+      allow update: if signedIn()
+        && resource.data.from == request.auth.uid
+        && validInvite(request.resource.data);
+      allow delete: if signedIn()
+        && (request.auth.uid == resource.data.to
+          || request.auth.uid == resource.data.from);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
