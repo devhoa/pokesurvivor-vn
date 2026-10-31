@@ -16,6 +16,7 @@
  *       peers() · mode(uid) -> 'connecting' | 'direct' | 'relay' | 'closed'
  */
 G.Net = (() => {
+  const DEBUG = typeof location !== 'undefined' && /[?&](debug-net|debug-coop)\b/.test(location.search);
   const ICE = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
   const DIRECT_TIMEOUT = 9000;          // ms para conseguir canal
   const ALLOW_RELAY = true, RETRY_MS = 15000;
@@ -97,7 +98,7 @@ G.Net = (() => {
   // ---------------- WebRTC ----------------
 
   function newPeer(u) {
-    const p = { pc: null, dc: null, mode: 'connecting', timer: 0 };
+    const p = { pc: null, dc: null, mode: 'connecting', timer: 0, syncReady: false };
     peers.set(u, p);
     // Sin WebRTC (navegador antiguo o bloqueado): directamente por el relé.
     let pc;
@@ -136,7 +137,7 @@ G.Net = (() => {
     p.binaryVersion = 0;
     dc.binaryType = 'arraybuffer';
     dc.onopen = () => {
-      clearTimeout(p.timer); p.mode = 'direct';
+      clearTimeout(p.timer); p.mode = 'direct'; p.syncReady = true;
       // Aviso de que entendemos binario (las versiones viejas lo ignoran); hasta que el otro
       // mande el suyo, se le habla en JSON.
       try { dc.send(JSON.stringify({ k: 'net-cap', binary: G.NetCodec.version })); } catch (e) { /* el JSON sigue valiendo */ }
@@ -167,8 +168,10 @@ G.Net = (() => {
   function useRelay(u) {
     const p = peers.get(u);
     if (!p || p.mode === 'direct' || p.mode === 'closed' || p.mode === 'failed') return;
+    if (DEBUG) console.log('[Net][relay]', { uid: u, from: uid, modeBefore: p.mode, modeAfter: ALLOW_RELAY ? 'relay' : 'failed', roomId });
     clearTimeout(p.timer);
     p.mode = ALLOW_RELAY ? 'relay' : 'failed';
+    p.syncReady = false;
     try { if (p.dc) p.dc.close(); } catch (e) { /* nada */ }
     try { if (p.pc) p.pc.close(); } catch (e) { /* nada */ }
     emitPeer(u);
@@ -262,6 +265,7 @@ G.Net = (() => {
     if (raw.length > 16000 || bytes > 16000) {
       stats.relayOversize++;
       reportRelayLimit(to, 'mensaje supera el límite de tamaño');
+      if (DEBUG) console.warn('[Net][relayDrop]', { uid: to, reason: 'oversize', bytes, rawLength: raw.length, msgType: msg && msg.k });
       return false;
     }
     if (msg && msg.k === 'f') {
@@ -273,6 +277,7 @@ G.Net = (() => {
         stats.relayOversize++;
         stats.relayDropped++;
         reportRelayLimit(to, 'frame supera los 12 KB y no se envió');
+        if (DEBUG) console.warn('[Net][relayDrop]', { uid: to, reason: 'frame-too-large', frameBytes, limit: RELAY_MAX_BYTES, msgType: msg.k });
         return false;
       }
       if (use.frames >= RELAY_MAX_FRAMES_PER_SECOND ||
@@ -280,6 +285,7 @@ G.Net = (() => {
         relayUsage.set(to, use);
         stats.relayDropped++;
         reportRelayLimit(to, 'límite de frecuencia o tráfico alcanzado');
+        if (DEBUG) console.warn('[Net][relayDrop]', { uid: to, reason: 'rate-limit', use, frameBytes, limitPerSec: RELAY_MAX_BYTES_PER_SECOND, maxFrames: RELAY_MAX_FRAMES_PER_SECOND });
         return false;
       }
       use.frames++;
@@ -296,6 +302,7 @@ G.Net = (() => {
   function send(to, msg) {
     if (!roomId) return;
     const p = peers.get(to);
+    if (DEBUG && msg && msg.k === 'f') console.log('[Net][send]', { to, mode: p && p.mode, uid, slow: slow(to), evCount: Array.isArray(msg.ev) ? msg.ev.length : 0, hasEnemies: !!(msg.e && msg.e.length), bytes: G.NetCodec.size(JSON.stringify(msg)) });
     stats.sent++;
     const pending = pendingEvents.get(to);
     const outgoing = msg && msg.k === 'f' && pending && pending.length
@@ -338,6 +345,9 @@ G.Net = (() => {
 
   function deliver(from, msg) {
     stats.recv++;
+    const p = peers.get(from);
+    if (p) p.syncReady = true;
+    if (DEBUG && msg && msg.k === 'f') console.log('[Net][recv]', { from, mode: mode(from), slow: slow(from), evCount: Array.isArray(msg.ev) ? msg.ev.length : 0, enemyCount: Array.isArray(msg.e) ? msg.e.length : 0, xp: msg.xp, lv: msg.lv, now: Date.now() });
     handlers.forEach(fn => { try { fn(from, msg); } catch (e) { console.error('[Net] mensaje:', e); } });
   }
 
@@ -348,10 +358,12 @@ G.Net = (() => {
     mode(u) { const p = peers.get(u); return p ? p.mode : 'closed'; },
     ready(u) {
       const p = peers.get(u);
-      if (p && ALLOW_RELAY && p.mode === 'relay') return true;
-      return !!(p && p.mode === 'direct' && p.dc && p.dc.readyState === 'open' &&
+      const r = p && ALLOW_RELAY && p.mode === 'relay' ? true : !!(p && p.mode === 'direct' && p.dc && p.dc.readyState === 'open' &&
         (!p.pc || (p.pc.connectionState !== 'failed' && p.pc.connectionState !== 'closed')));
+      if (DEBUG) console.log('[Net][ready]', { uid: u, mode: p && p.mode, ready: r, viaRelay: !!(p && p.mode === 'relay'), roomId });
+      return r;
     },
+    syncReady(u) { const p = peers.get(u); return !!(p && p.syncReady); },
     viaRelay(u) { const p = peers.get(u); return !!(p && p.mode === 'relay'); },
     /** ¿Va por el relé (o no hay conexión)? Entonces se manda menos a menudo. */
     slow(u) { const p = peers.get(u); return !p || p.mode !== 'direct'; },

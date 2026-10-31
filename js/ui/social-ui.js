@@ -257,7 +257,7 @@
       }
 
       const btn = $('lobby-start');
-      const connecting = ms.some(m => m.uid !== room.host && !G.Net.ready(m.uid) && G.Net.mode(m.uid) !== 'failed');
+      const connecting = ms.some(m => m.uid !== room.host && !G.Net.syncReady(m.uid) && G.Net.mode(m.uid) !== 'failed');
       const failed = ms.some(m => m.uid !== room.host && G.Net.mode(m.uid) === 'failed');
       btn.disabled = !isHost || ms.length < 2 || room.lost || connecting || failed;
       btn.textContent = 'Empezar partida (' + ms.length + '/' + G.Social.MAX_PLAYERS + ')';
@@ -271,9 +271,9 @@
     function start() {
       const room = G.Social.room;
       if (!room || room.host !== G.Social.uid || room.members.length < 2) return;
-      if (room.lost || room.members.some(m => m.uid !== room.host && !G.Net.ready(m.uid))) {
+      if (room.lost || room.members.some(m => m.uid !== room.host && !G.Net.syncReady(m.uid))) {
         render();
-        G.UI.toast('Espera a que todos los amigos aparezcan conectados antes de empezar.');
+        G.UI.toast('Espera a que todos los amigos estén sincronizados antes de empezar.');
         return;
       }
       const cfg = {
