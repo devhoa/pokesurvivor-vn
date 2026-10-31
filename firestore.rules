@@ -42,12 +42,19 @@ service cloud.firestore {
       allow get: if owns(userId);
       allow list: if false;
       allow create: if owns(userId)
-        && code == 'WELCOME2026'
+        && (
+          code == 'WELCOME2026'
+          || code == 'HOA2026'
+          || code == 'HOAVIP'
+        )
         && request.resource.data.keys().hasAll(['code', 'coins', 't1', 'createdAt'])
         && request.resource.data.keys().hasOnly(['code', 'coins', 't1', 'createdAt'])
         && request.resource.data.code == code
-        && request.resource.data.coins == 500
-        && request.resource.data.t1 == 100
+        && (
+          (request.resource.data.code == 'WELCOME2026' && request.resource.data.coins == 500 && request.resource.data.t1 == 100)
+          || (request.resource.data.code == 'HOA2026' && request.resource.data.coins == 1000 && request.resource.data.t1 == 200)
+          || (request.resource.data.code == 'HOAVIP' && request.resource.data.coins == 2500 && request.resource.data.t1 == 500)
+        )
         && request.resource.data.createdAt == request.time;
       allow update, delete: if false;
     }

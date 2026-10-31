@@ -29,7 +29,11 @@ G.DB = (() => {
   const K_CLOUD = 'ps.cloud.', K_MIGRATED = 'ps.migrated.';
   const VERSION = 3;
   const START_COINS = 500;
-  const GIFTCODES = { WELCOME2026: { coins: 500, t1: 100 } };
+  const GIFTCODES = {
+    WELCOME2026: { coins: 500, t1: 100 },
+    HOA2026: { coins: 1000, t1: 200 },
+    HOAVIP: { coins: 2500, t1: 500 }
+  };
   function normalizeGiftcode(raw) {
     const value = String(raw || '').trim().toUpperCase().replace(/[\s_-]+/g, '');
     return value === '2026' || value === 'WELCOME2026' ? 'WELCOME2026' : value;
