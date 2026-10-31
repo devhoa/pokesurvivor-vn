@@ -43,7 +43,7 @@ function lobby({ uid, host, isHost, ready = true }) {
     UI: { $: element, isOpen: () => false, spriteCanvas: () => ({}) },
     U: { esc: String },
     Social: { uid, room, MAX_PLAYERS: 4, friends: [], on() {} },
-    Net: { ready: () => ready, mode: () => 'direct', viaTurn: () => false, onPeer() {} },
+    Net: { ready: () => ready, mode: () => 'direct', viaRelay: () => false, onPeer() {} },
     Coop: { COLORS: ['#fff', '#fff', '#fff', '#fff'] },
     DEX_BY: { 1: { name: 'Hostmon' }, 2: { name: 'Guestmon' } },
     T: value => value

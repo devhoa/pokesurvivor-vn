@@ -3,9 +3,11 @@
 Based on main `803125dfdf3066fe6cf65f490f1e7b577871a295`.
 This change reduces application payload bytes, not message frequency. The
 existing reliable, ordered WebRTC data channel and 15 Hz direct update rate
-remain. Firebase signaling, start-message fallback, gameplay, pause reconciliation
-and saving are unchanged. Neither TURN nor the disabled RTDB gameplay relay is
-enabled. No additional service or package is required.
+remain. When direct WebRTC fails, gameplay uses the existing Firebase Realtime
+Database message queue, limited to 3 frames/s, 12,000 bytes/frame and 24,000
+frame bytes/s per recipient. Oversized or over-budget snapshots are skipped;
+the next full snapshot restores current state. The direct STUN-only path remains
+preferred. No TURN service or additional package is used.
 
 ## Compatibility and delivery
 
@@ -81,9 +83,11 @@ matches before claiming lower latency or equivalent battery consumption.
 
 `G.Net.stats` in a development build exposes cumulative `sentBytes`, `jsonBytes`
 (the equivalent JSON size), `recvBytes`, `binarySent`, `binaryRecv` and
-`invalidBinary`, alongside the existing message counters. Payload byte counters
-exclude capability messages, signaling, RTDB, SCTP/DTLS/IP/TURN overhead and failed
-sends. Values accumulate for the lifetime of the page: take before/after deltas
+`invalidBinary`, alongside `relayBytes`, `relayDropped`, `relayOversize` and
+the existing message counters. Relay counters include the serialized RTDB
+envelope; direct payload byte counters exclude capability messages, signaling,
+RTDB, SCTP/DTLS/IP overhead and failed sends. Values accumulate for the lifetime
+of the page: take before/after deltas
 for a particular match. Savings = `1 - deltaSentBytes / deltaJsonBytes` when the
 denominator is nonzero. The normal production build still hides `G`; no debug
 endpoint or additional telemetry is introduced.
@@ -99,5 +103,6 @@ both host and guest with test world/network doubles.
 `node tools/build.js`, `node tools/export_data.js`, and
 `python tools/make_seo_pages.py` regenerate the normal protected distribution.
 No desktop/browser-control tests were used. Real cross-browser WebRTC sessions,
-mobile CPU, NAT traversal and TURN are not validated by these automated tests.
-This bandwidth/cost implementation change does not add a player changelog entry.
+mobile CPU and NAT traversal are not validated by these automated tests.
+The RTDB fallback is tested with bounded local test doubles, not a live Firebase
+room; actual database usage depends on the number and size of relay frames.

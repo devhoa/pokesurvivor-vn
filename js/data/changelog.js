@@ -7,8 +7,8 @@
  */
 G.CHANGELOG = [
   { d: '2026-10-31', title: ['Inicio de partida en grupo', 'Co-op game start'], fix: [
-    ['El botón de empezar permanece visible en la sala; sólo el anfitrión puede usarlo y se activa cuando todos están conectados.',
-     'The start button stays visible in the lobby; only the host can use it, and it becomes enabled when everyone is connected.']
+    ['El botón de empezar permanece visible en la sala; sólo el anfitrión puede usarlo y se activa cuando todos están conectados, también si algún jugador necesita el relé limitado.',
+     'The start button stays visible in the lobby; only the host can use it, and it becomes enabled when everyone is connected, including when a player needs the limited relay.']
   ]},
   { d: '2026-10-31', title: ['Giftcode de bienvenida', 'Welcome gift code'], new: [
     ['Canjea WELCOME2026 desde Perfil para recibir 500 Pokémonedas y 100 tickets de gacha, una vez por cuenta.',

@@ -1,19 +1,7 @@
 name = "pokesurvivor-ranking"
 main = "ranking-worker.mjs"
 compatibility_date = "2026-10-29"
-workers_dev = false
-
-[[routes]]
-pattern = "ice.pokesurvivor.com/v1/seal*"
-zone_name = "pokesurvivor.com"
-
-[[routes]]
-pattern = "ice.pokesurvivor.com/v1/submit*"
-zone_name = "pokesurvivor.com"
-
-[[routes]]
-pattern = "ice.pokesurvivor.com/v1/deferred*"
-zone_name = "pokesurvivor.com"
+workers_dev = true
 
 [vars]
 FIREBASE_PROJECT_ID = "pokesurvivor-460d6"

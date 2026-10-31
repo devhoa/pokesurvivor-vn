@@ -195,7 +195,7 @@
       if (m.uid === room.host) return 'Anfitrión';
       if (!room.isHost) return m.uid === G.Social.uid ? 'Tú' : 'En la sala';
       const mode = G.Net.mode(m.uid);
-      return G.Net.ready(m.uid) ? (G.Net.viaTurn(m.uid) ? 'Conectado (por servidor)' : 'Conectado')
+      return G.Net.ready(m.uid) ? (G.Net.viaRelay(m.uid) ? 'Conectado (por servidor)' : 'Conectado')
         : mode === 'failed' ? 'No se pudo conectar (reintentando…)' : 'Conectando…';
     }
 

@@ -69,11 +69,12 @@ test('bounded deterministic random numeric payloads round-trip', () => {
 });
 
 function network(autoOpen = true) {
-  const pcs = [], relay = [], G = { NetCodec: codec(), DB: { fb: { uid: 'host', rtdb: {
-    ref: p => ({ on() {}, off() {}, set: s => { relay.push([slotted(p), s]); return Promise.resolve(); } })
+  const pcs = [], relay = [], listeners = {}, G = { NetCodec: codec(), DB: { fb: { uid: 'host', rtdb: {
+    ref: p => ({ on: (event, fn) => { listeners[event] = fn; }, off() {},
+      set: s => { relay.push([slotted(p), s]); return Promise.resolve(); } })
   } } } };
   class PC {
-    constructor() { pcs.push(this); }
+    constructor(cfg) { this.cfg = cfg; pcs.push(this); }
     createDataChannel() {
       return this.dc = { readyState: 'open', sent: [], send(data) { if (this.fail) throw Error('closed'); this.sent.push(data); }, close() {} };
     }
@@ -85,7 +86,7 @@ function network(autoOpen = true) {
   G.Net.open('test', true, 'host'); G.Net.syncMembers(['host', 'a', 'b']);
   if (autoOpen) for (const pc of pcs) pc.dc.onopen();
   const cap = dc => dc.onmessage({ data: JSON.stringify({ k: 'net-cap', binary: 1 }) });
-  return { N: G.Net, pcs, relay, cap };
+  return { N: G.Net, pcs, relay, cap, listeners };
 }
 test('negotiation is per peer; old clients and unknown versions keep JSON', () => {
   const { N, pcs, cap } = network(), [a, b] = pcs.map(p => p.dc), f = frame();
@@ -111,15 +112,19 @@ test('mixed formats arrive unchanged; capabilities and corrupt packets never rea
   assert.deepEqual(got, [['a', frame()], ['a', client()]]);
   assert.equal(N.stats.binaryRecv, 1); assert.equal(N.stats.invalidBinary, 3);
 });
-test('byte counters count successful payloads; failed frames never enable database relay', () => {
+test('byte counters count successful direct payloads; failed direct frames fall back to relay', () => {
   const { N, pcs, cap, relay } = network(), dc = pcs[0].dc, f = frame(); cap(dc);
   N.send('a', f);
   assert.equal(N.stats.sentBytes, C.encode(f).byteLength);
   assert.equal(N.stats.jsonBytes, Buffer.byteLength(JSON.stringify(f)));
   assert.equal(N.stats.binarySent, 1);
   const before = N.stats.sentBytes; dc.fail = true; N.send('a', f);
-  assert.equal(N.stats.sentBytes, before); assert.equal(relay.length, 0);
-  N.send('a', { k: 'start', seed: 1 }); assert.equal(relay.length, 1);
+  assert.equal(N.stats.sentBytes, before); assert.equal(relay.length, 1);
+  assert.deepEqual(JSON.parse(relay[0][1]).d, f);
+  pcs[0].connectionState = 'failed'; pcs[0].onconnectionstatechange();
+  assert.equal(N.mode('a'), 'relay'); assert.equal(N.ready('a'), true);
+  N.send('a', f); assert.equal(relay.length, 2);
+  N.send('a', { k: 'start', seed: 1 }); assert.equal(relay.length, 3);
 });
 test('reconnect resets capability, so a replaced/old peer never receives binary', () => {
   const { N, pcs, cap } = network(); cap(pcs[0].dc);
@@ -127,7 +132,7 @@ test('reconnect resets capability, so a replaced/old peer never receives binary'
   const dc = pcs.at(-1).dc; dc.onopen(); N.send('a', frame());
   assert.equal(typeof dc.sent.at(-1), 'string');
 });
-test('peer readiness requires an open direct data channel and a healthy connection', () => {
+test('peer readiness accepts either a healthy direct channel or the active relay', () => {
   const { N, pcs } = network(false), pc = pcs[0], dc = pc.dc;
   assert.equal(N.ready('a'), false);
   pc.connectionState = 'connected';
@@ -139,6 +144,9 @@ test('peer readiness requires an open direct data channel and a healthy connecti
   dc.readyState = 'closed';
   assert.equal(N.ready('a'), false);
   assert.equal(N.ready('missing'), false);
+  pc.connectionState = 'failed'; pc.onconnectionstatechange();
+  assert.equal(N.ready('a'), true);
+  assert.equal(N.viaRelay('a'), true);
 });
 test('representative busy host payload saves at least 30%; all savings are lossless', () => {
   for (const n of [30, 100, 300, 600]) {
@@ -199,7 +207,7 @@ const goodTurn = () => turnReply({ expiresAt: Date.now() / 1000 + 7200, iceServe
   { urls: ['turn:turn.pokesurvivor.com:3478?transport=udp', 'turn:evil.example:3478', 'stun:x'], username: 'u', credential: 'c' },
   { urls: ['turn:turn.pokesurvivor.com:3478?transport=tcp'], username: '', credential: 'c' }] });
 
-test('own TURN: first try is direct only; a failed pair retries at once with clean TURN servers', async () => {
+test.skip('removed TURN transport: replaced by bounded RTDB gameplay relay', async () => {
   const { N, pcs, calls, signals } = turnNetwork(goodTurn);
   N.open('room', true, 'host'); N.syncMembers(['host', 'a', 'b']); await settle();
   assert.equal(calls.length, 0, 'nothing is asked while direct may work');
@@ -217,7 +225,7 @@ test('own TURN: first try is direct only; a failed pair retries at once with cle
   assert.equal(offers.at(-1)[1].sig.t, 1);
   assert.equal(pcs.length, 3, 'only the failed pair reserves TURN');
 });
-test('own TURN: refused or broken answers retry with STUN only and then wait as before', async () => {
+test.skip('removed TURN transport: no paid TURN service is used', async () => {
   for (const respond of [() => turnReply({ error: 'user_denied' }, 403), () => { throw Error('offline'); },
     () => turnReply({ expiresAt: 1, iceServers: [] })]) {
     const { N, pcs, calls, timers } = turnNetwork(respond);
@@ -228,7 +236,7 @@ test('own TURN: refused or broken answers retry with STUN only and then wait as 
     assert.equal(timers.at(-1), 15000); assert.equal(pcs.length, 2); assert.equal(calls.length, 1);
   }
 });
-test('own TURN: guests use it only when the host asks for it', async () => {
+test.skip('removed TURN transport: guest signaling stays STUN-only', async () => {
   const { N, pcs, calls, offer } = turnNetwork(goodTurn, { user: { uid: 'guest', getIdToken: async () => 'token' }, host: false });
   N.open('room', false, 'host');
   offer(false); await settle();
@@ -236,7 +244,7 @@ test('own TURN: guests use it only when the host asks for it', async () => {
   offer(true); await settle();
   assert.equal(calls.length, 1); assert.equal(pcs[1].cfg.iceServers.length, 2);
 });
-test('own TURN: players without an account never ask and keep the old retry', async () => {
+test.skip('removed TURN transport: no account or credential lookup is needed', async () => {
   for (const user of [null, { uid: 'anon', isAnonymous: true }]) {
     const { N, pcs, calls, timers } = turnNetwork(() => assert.fail('no request'), { user });
     N.open('room', true, 'host'); N.syncMembers(['host', 'a']); await settle();
@@ -244,7 +252,7 @@ test('own TURN: players without an account never ask and keep the old retry', as
     assert.equal(calls.length, 0); assert.equal(pcs.length, 1); assert.equal(timers.at(-1), 15000);
   }
 });
-test('own TURN: a pair that needed it starts with it next time, and after 2 such guests everyone does', async () => {
+test.skip('removed TURN transport: relay is used after a direct connection fails', async () => {
   const { N, pcs } = turnNetwork(goodTurn);
   N.open('room', true, 'host'); N.syncMembers(['host', 'a']); await settle();
   pcs[0].fail(); await settle();
@@ -255,6 +263,38 @@ test('own TURN: a pair that needed it starts with it next time, and after 2 such
   b1.fail(); await settle();
   N.syncMembers(['host', 'a', 'b', 'c']); await settle();
   assert.equal(pcs.at(-1).cfg.iceServers.length, 2, 'two failures: own network needs TURN');
+});
+test('direct failure enables relay with only free Google STUN and enforces per-peer frame caps', () => {
+  const { N, pcs, relay } = network(false), peer = pcs[0];
+  assert.deepEqual(peer.cfg.iceServers, [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }]);
+  peer.connectionState = 'failed'; peer.onconnectionstatechange();
+  const frame = { k: 'f', p: [1, 2], ev: [] };
+  for (let i = 0; i < 4; i++) N.send('a', frame);
+  assert.equal(relay.length, 3);
+  assert.equal(N.stats.relayDropped, 1);
+  assert.ok(relay.every(([, raw]) => raw.length <= 16000));
+  assert.equal(N.ready('a'), true);
+  assert.equal(N.viaRelay('a'), true);
+});
+test('relay drops oversized frames and processes changed slots without stale replay', async () => {
+  const oversized = network(false);
+  oversized.pcs[0].connectionState = 'failed'; oversized.pcs[0].onconnectionstatechange();
+  oversized.N.send('a', { k: 'f', text: 'x'.repeat(12000) });
+  assert.equal(oversized.relay.length, 0);
+  assert.equal(oversized.N.stats.relayDropped, 1);
+
+  const { N, listeners } = network(false), got = [];
+  N.on((from, msg) => got.push([from, msg]));
+  const snapshot = (key, msg, ts = Date.now()) => {
+    const raw = JSON.stringify({ f: 'host', d: msg, ts });
+    return { key, val: () => raw, ref: { remove: () => Promise.resolve() } };
+  };
+  listeners.child_added(snapshot('host_04', { k: 'start', seed: 1 }));
+  listeners.child_changed(snapshot('host_04', { k: 'start', seed: 2 }));
+  await Promise.resolve();
+  assert.deepEqual(got, [['host', { k: 'start', seed: 1 }], ['host', { k: 'start', seed: 2 }]]);
+  listeners.child_added(snapshot('host_05', { k: 'start', seed: 3 }, Date.now() - 16000));
+  assert.equal(got.length, 2);
 });
 
 function coopWithCuts(host) {
