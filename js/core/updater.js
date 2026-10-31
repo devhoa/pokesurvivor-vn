@@ -54,7 +54,21 @@ G.Updater = (() => {
     // Que lo guardado suba a la nube antes de recargar (como mucho 6 s).
     const dirty = G.DB.syncState && G.DB.syncState !== 'ok' && G.DB.syncState !== 'local';
     if (dirty) { try { await Promise.race([G.DB.flush(), new Promise(r => setTimeout(r, 6000))]); } catch (e) { /* queda en este navegador */ } }
-    location.reload();
+    try {
+      // La versión nueva puede seguir en caché del navegador o del service worker:
+      // se borran caches del sitio y se fuerza una URL nueva para evitar el bundle viejo.
+      if (typeof caches !== 'undefined') {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    } catch (e) { /* si el navegador no permite limpiar caches, al menos recarga con query string */ }
+    const url = new URL(location.href);
+    url.searchParams.set('refresh', String(Date.now()));
+    location.href = url.toString();
   }
 
   function countdown() {
@@ -91,7 +105,28 @@ G.Updater = (() => {
     tick();
   }
 
+  function setButtonVisible() {
+    const b = document.getElementById('btn-update');
+    if (!b) return;
+    const visible = !!pending;
+    b.classList.toggle('hidden', !visible);
+    b.style.display = visible ? '' : 'none';
+    b.textContent = G.I18n && G.I18n.lang === 'en' ? 'Update now' : 'Cập nhật ngay';
+  }
+
+  function manualUpdate() {
+    if (!pending) return;
+    if (safe()) {
+      if (forced && inRun()) { forceEnd(); return; }
+      if (!counting) countdown();
+      return;
+    }
+    if (inRun()) G.UI.toast('La actualización se hará cuando termine la partida.', 2200);
+    else G.UI.toast('La actualización se hará cuando vuelvas al menú.', 2200);
+  }
+
   function loop() {
+    setButtonVisible();
     if (pending && forced && !counting && inRun()) { forceEnd(); return; }
     if (pending && forced && !counting && G.Game && G.Game.state === 'over') { reload(); return; }   // resumen: ya está guardado
     if (pending && !counting && safe()) countdown();
@@ -100,11 +135,18 @@ G.Updater = (() => {
 
   function init() {
     if (!mine || !location.protocol.startsWith('http')) return;
+    const b = document.getElementById('btn-update');
+    if (b) {
+      b.onclick = manualUpdate;
+      b.textContent = G.I18n && G.I18n.lang === 'en' ? 'Update now' : 'Cập nhật ngay';
+      b.classList.add('hidden');
+      b.style.display = 'none';
+    }
     clearInterval(timer);
     timer = setInterval(loop, 2000);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && Date.now() - lastCheck > 60000) check(); });
     setTimeout(check, 30000);
   }
 
-  return { init, check, get pending() { return pending; }, get version() { return mine; } };
+  return { init, check, manualUpdate, get pending() { return pending; }, get version() { return mine; } };
 })();
