@@ -24,9 +24,10 @@
 G.Coop = (() => {
   const ANIMS = ['Idle', 'Walk', 'Attack', 'Shoot', 'Charge', 'Hurt', 'Faint'];
   const COLORS = ['#ffcb3d', '#5fc8ff', '#7ee07a', '#ff8ad8'];
-  // Mensajes por segundo: 15 por la conexión directa y 3 por el relé limitado
-  // de la Realtime Database.
-  const RATE_FAST = 1 / 15, RATE_SLOW = 1 / 3;
+  // Mensajes por segundo: 15 por la conexión directa y 6 por el relé limitado
+  // de la Realtime Database. Eso mantiene el juego con vida sin saturar la
+  // base de datos ni dejar a los compañeros "congelados" en la sala.
+  const RATE_FAST = 1 / 15, RATE_SLOW = 1 / 6;
   const rateFor = u => (G.Net.slow(u) ? RATE_SLOW : RATE_FAST);
   const NEAR = 950;                     // radio de enemigos que se mandan a cada uno
 
@@ -234,14 +235,22 @@ G.Coop = (() => {
       if (o.connected && o.uid !== m.uid && o.state) p[o.uid] = o.state;
     }
     const ev = m.q; m.q = [];
-    const f = { k: 'f', t: r2(st.time), lv: st.level, xp: r2(st.xp), xn: st.xpNext, ki: st.kills, bo: st.bosses, co: st.coins, tk: [st.t1, st.t10, st.cn || 0],
-                p, e: enemyList(viewOf(m)), ev };
-    const ja = G.Judgment.netState();       // Arceus en la Sentencia
-    if (ja) f.ja = ja;
+    const slowRelay = G.Net.slow(m.uid);
+    const enemies = enemyList(viewOf(m));
+    const frame = {
+      k: 'f', t: r2(st.time), lv: st.level, xp: r2(st.xp), xn: st.xpNext, ki: st.kills, bo: st.bosses, co: st.coins,
+      tk: [st.t1, st.t10, st.cn || 0], p,
+      e: slowRelay ? enemies.slice(0, 10) : enemies,
+      ev: slowRelay ? ev.slice(-24) : ev
+    };
+    if (!slowRelay) {
+      const ja = G.Judgment.netState();
+      if (ja) frame.ja = ja;
+    }
     // Siempre: quién está eligiendo y, si hay cartas de nivel, cuáles (ver arriba).
-    f.ho = holdNames();
-    if (waiting.size) f.lu = [levelSeq, levelNow];
-    return f;
+    frame.ho = holdNames();
+    if (waiting.size) frame.lu = [levelSeq, levelNow];
+    return frame;
   }
 
   function flushAll() { for (const m of mates.values()) if (m.connected) G.Net.send(m.uid, hostFrame(m)); }

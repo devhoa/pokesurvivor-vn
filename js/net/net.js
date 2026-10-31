@@ -22,7 +22,7 @@ G.Net = (() => {
   // El relé del servidor se usa como respaldo: más ancho que el viejo límite 3
   // FPS, pero sigue acotado para no saturar la base de datos ni hacer que un
   // jugador "se quede quieto" al perder el canal directo.
-  const RELAY_MAX_BYTES = 12000, RELAY_MAX_BYTES_PER_SECOND = 48000, RELAY_MAX_FRAMES_PER_SECOND = 6;
+  const RELAY_MAX_BYTES = 12000, RELAY_MAX_BYTES_PER_SECOND = 60000, RELAY_MAX_FRAMES_PER_SECOND = 6;
   const ICE_BATCH = 250, ICE_MAX = 40;    // candidatos: se juntan 250 ms (o 40) en un mensaje (ver newPeer)
 
 
