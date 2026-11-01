@@ -39,6 +39,7 @@ G.Game = (() => {
     if (window.visualViewport) visualViewport.addEventListener('resize', resizeSoon);
     if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(cv);
     G.Touch.init(cv);
+    addEventListener('beforeunload', () => { if (state !== 'ui' && pl) saveResumeState(); });
     // En móvil: al cambiar de app o girarlo en vertical, la partida se pausa.
     document.addEventListener('visibilitychange', () => { if (document.hidden) autoPause(); });
     // En el móvil, bajar la cortina de avisos o abrir otra app por encima a veces
@@ -223,9 +224,178 @@ G.Game = (() => {
     state = 'playing';
   }
 
+  const RESUME_KEY = 'ps.resume.run';
+  function readResumeState() {
+    try { return JSON.parse(localStorage.getItem(RESUME_KEY) || 'null'); }
+    catch (e) { return null; }
+  }
+  function writeResumeState(v) {
+    try { localStorage.setItem(RESUME_KEY, JSON.stringify(v)); }
+    catch (e) { /* nada */ }
+  }
+  function clearResumeState() {
+    try { localStorage.removeItem(RESUME_KEY); }
+    catch (e) { /* nada */ }
+  }
+  function isFiniteNum(v) { return typeof v === 'number' && Number.isFinite(v); }
+  function isStableRunState() {
+    if (!pl || !G.DB.save || !G.DB.save.partner) return false;
+    if (G.Rift && (G.Rift.inArena || (G.Rift.rift && G.Rift.rift.ttl > 0))) return false;
+    if (G.Judgment && G.Judgment.active) return false;
+    if (!isFiniteNum(pl.x) || !isFiniteNum(pl.y) || !isFiniteNum(pl.hp) || !isFiniteNum(pl.maxHp)) return false;
+    const hasBoss = G.EnemyMgr && G.EnemyMgr.all ? G.EnemyMgr.all().some(e => !e.dead && (e.boss || e.legend || e.arceus)) : false;
+    return !hasBoss;
+  }
+  function validateResumeSnapshot(snap) {
+    if (!snap || !snap.player || !snap.world || !snap.world.biome && snap.world.biome !== 0) return false;
+    if (!isFiniteNum(snap.player.x) || !isFiniteNum(snap.player.y) || !isFiniteNum(snap.player.hp) || !isFiniteNum(snap.player.maxHp)) return false;
+    if ((snap.scene && (snap.scene.arena || snap.scene.rift || snap.scene.judgment)) || (Array.isArray(snap.bossState) && snap.bossState.length)) return false;
+    const enemies = Array.isArray(snap.enemies) ? snap.enemies : [];
+    for (const e of enemies) {
+      if (!isFiniteNum(e.x) || !isFiniteNum(e.y) || !isFiniteNum(e.hp) || !isFiniteNum(e.maxHp)) return false;
+      if ((e.boss || e.legend || e.arceus) && !(e.dead === true || !e.dead)) return false;
+      if ((e.boss || e.legend || e.arceus) && Number(e.hp) <= 0) return false;
+    }
+    if (Array.isArray(snap.projectiles)) {
+      for (const p of snap.projectiles) {
+        if (!isFiniteNum(p.x) || !isFiniteNum(p.y) || !isFiniteNum(p.vx) || !isFiniteNum(p.vy)) return false;
+      }
+    }
+    return true;
+  }
+  function saveResumeState() {
+    if (!pl || !G.DB.save || !G.DB.save.partner) return;
+    if (!isStableRunState()) {
+      clearResumeState();
+      return;
+    }
+    const scene = {
+      biome,
+      arena: G.Rift && G.Rift.arena ? {
+        tx: G.Rift.arena.tx, ty: G.Rift.arena.ty, r: G.Rift.arena.r, dex: G.Rift.arena.dex,
+        shiny: !!G.Rift.arena.shiny, x: G.Rift.arena.x, y: G.Rift.arena.y, t: G.Rift.arena.t
+      } : null,
+      rift: G.Rift && G.Rift.rift ? { x: G.Rift.rift.x, y: G.Rift.rift.y, ttl: G.Rift.rift.ttl, t: G.Rift.rift.t } : null,
+      judgment: G.Judgment && G.Judgment.active ? { phase: G.Judgment.phase || 'fight', t: G.Judgment.t || 0 } : null
+    };
+    const bossState = G.EnemyMgr && G.EnemyMgr.all ? G.EnemyMgr.all().filter(e => (e.boss || e.legend || e.arceus) && !e.dead).map(e => ({
+      id: e.id, dex: e.dex, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp, boss: !!e.boss, legend: !!e.legend, arceus: !!e.arceus,
+      shiny: !!e.shiny, phase: e.phase || 'walk', t: e.t || 0, shield: e.shield || 0, stunT: e.stunT || 0
+    })) : [];
+    const snap = {
+      savedAt: Date.now(),
+      time,
+      world: {
+        seed: Number(G.World.seed || 0),
+        biome: Number(biome || 0)
+      },
+      partner: G.DB.save.partner,
+      partnerShiny: !!G.DB.save.partnerShiny,
+      item: pl.item || null,
+      player: {
+        x: pl.x,
+        y: pl.y,
+        moveAngle: pl.moveAngle,
+        aim: pl.aim,
+        dead: !!pl.dead,
+        walking: !!pl.walking,
+        hp: pl.hp,
+        maxHp: pl.maxHp,
+        invuln: pl.invuln || 0,
+        slowT: pl.slowT || 0
+      },
+      level: pl.level,
+      xp: pl.xp,
+      xpNext: pl.xpNext,
+      kills: pl.kills,
+      bosses: pl.bosses,
+      coins: pl.coins,
+      t1: pl.t1,
+      t10: pl.t10,
+      candy: pl.candy || 0,
+      bind: Object.assign({}, pl.bind || {}),
+      banned: Array.from(pl.banned || []),
+      active: pl.active || 0,
+      moves: pl.moves.map(m => ({ id: m.id, lvl: m.lvl, dealt: m.dealt || 0, since: m.since || 0, evolved: !!m.evolved })),
+      slots: pl.slots.map(group => group.map(m => m.id)),
+      enemies: G.EnemyMgr.snapshot ? G.EnemyMgr.snapshot() : [],
+      projectiles: G.Projectiles.snapshot ? G.Projectiles.snapshot() : [],
+      pickups: G.Pickups.snapshot ? G.Pickups.snapshot() : [],
+      scene,
+      bossState
+    };
+    if (!validateResumeSnapshot(snap)) {
+      clearResumeState();
+      return;
+    }
+    writeResumeState(snap);
+  }
+  function restoreResumeState() {
+    const snap = readResumeState();
+    if (!snap || !G.DB.save || !G.DB.save.partner) return false;
+    if (!validateResumeSnapshot(snap)) {
+      clearResumeState();
+      G.UI.toast('No se puede continuar con una run inestable o con arena/boss activo', 2600);
+      return false;
+    }
+    startRun();
+    if (!pl) return false;
+    const save = G.DB.save;
+    const seed = Number((snap.world && snap.world.seed) || 0) || Math.floor(Math.random() * 1e6);
+    const biomeIndex = Number((snap.world && snap.world.biome) || 0) || 0;
+    G.World.reset(seed);
+    G.World.setBiome(Math.max(0, biomeIndex), true);
+    biome = biomeIndex;
+    time = Number(snap.time || 0) || 0;
+    pl.level = Number(snap.level || pl.level) || pl.level;
+    pl.xp = Number(snap.xp || 0) || pl.xp;
+    pl.xpNext = Number(snap.xpNext || pl.xpNext) || pl.xpNext;
+    pl.kills = Number(snap.kills || 0) || pl.kills;
+    pl.bosses = Number(snap.bosses || 0) || pl.bosses;
+    pl.coins = Number(snap.coins || 0) || pl.coins;
+    pl.t1 = Number(snap.t1 || 0) || pl.t1;
+    pl.t10 = Number(snap.t10 || 0) || pl.t10;
+    pl.candy = Number(snap.candy || 0) || pl.candy;
+    pl.hp = Number((snap.player && snap.player.hp) || pl.maxHp) || pl.maxHp;
+    pl.maxHp = Number((snap.player && snap.player.maxHp) || pl.maxHp) || pl.maxHp;
+    pl.bind = Object.assign({}, snap.bind || {});
+    pl.banned = new Set(Array.isArray(snap.banned) ? snap.banned : []);
+    pl.item = snap.item || null;
+    pl.moveAngle = Number((snap.player && snap.player.moveAngle) || 0) || 0;
+    pl.aim = Number((snap.player && snap.player.aim) || Math.PI / 2) || Math.PI / 2;
+    pl.x = Number((snap.player && snap.player.x) || pl.x) || pl.x;
+    pl.y = Number((snap.player && snap.player.y) || pl.y) || pl.y;
+    pl.dead = !!(snap.player && snap.player.dead);
+    pl.walking = !!(snap.player && snap.player.walking);
+    pl.invuln = Number((snap.player && snap.player.invuln) || 0) || 0;
+    pl.slowT = Number((snap.player && snap.player.slowT) || 0) || 0;
+    pl.moves = (snap.moves || []).map(m => {
+      const move = G.Moves.instance(m.id, Number(m.lvl) || 1);
+      move.dealt = Number(m.dealt) || 0;
+      move.since = Number(m.since) || 0;
+      move.evolved = !!m.evolved;
+      return move;
+    });
+    const loadedSlots = Array.isArray(snap.slots) && snap.slots.length ? snap.slots : [pl.moves.map(m => m.id)];
+    pl.slots = loadedSlots.map(slot => slot.map(id => pl.moves.find(m => m.id === id)).filter(Boolean));
+    if (!pl.slots.length) pl.slots = [pl.moves.slice()];
+    pl.active = Math.min(Math.max(Number(snap.active) || 0, 0), Math.max(pl.slots.length - 1, 0));
+    pl.hp = Math.min(pl.hp, pl.maxHp);
+    G.Camera.x = pl.x; G.Camera.y = pl.y; G.Camera.shake = 0;
+    if (G.EnemyMgr.loadSnapshot) G.EnemyMgr.loadSnapshot(snap.enemies || []);
+    if (G.Projectiles.loadSnapshot) G.Projectiles.loadSnapshot(snap.projectiles || []);
+    if (G.Pickups.loadSnapshot) G.Pickups.loadSnapshot(snap.pickups || []);
+    state = 'playing';
+    save.partner = save.partner || snap.partner;
+    save.partnerShiny = !!snap.partnerShiny;
+    clearResumeState();
+    G.UI.toast('Continuando la última run guardada', 2600);
+    return true;
+  }
   function quitRun() {
     if (G.Coop.active) G.Coop.leave();
-    endRun(false);
+    saveResumeState();
+    endRun(false, true);
   }
 
   /** Todos los jugadores de la partida (tú primero). */
@@ -384,7 +554,7 @@ G.Game = (() => {
     if (!wasOwned) irisSay(e.dex);
   };
 
-  function endRun(dead = true) {
+  function endRun(dead = true, preserveResume = false) {
     if (state === 'over' || !pl) return;
     const coop = !!pl.uid;                    // sólo las partidas en grupo le ponen uid
     const wasHost = !!pl.coopHost;
@@ -429,6 +599,7 @@ G.Game = (() => {
     G.Progress.checkAch();
     // Se guarda en este aparato; a la nube sube al pulsar Guardar (ver db.js).
     G.DB.commit('run');
+    if (!preserveResume) clearResumeState();
     if (G.Social.me) G.Social.publishProfile();
 
     // Ranking: en solitario cada uno lo suyo; en grupo lo sube el anfitrión.
@@ -1054,26 +1225,30 @@ G.Game = (() => {
 
   return {
     init, startRun, everyone, levelXp, flash, offerBond,
-    /** Para pruebas: salta el reloj de la run. */
-    debugTime(t) { tampered = true; time = t; },
-    /** Halloween: caramelos de golpe (al llegar al gran Gengar; en grupo, los da el anfitrión a todos). */
-    addCandy(n) {
-      if (!pl || !(n > 0)) return;
-      pl.candy = (pl.candy || 0) + n;
-      bankTickets();
-      G.FX.dmgText(pl.x, pl.y - pl.bodyH - 14, '+' + n + ' caramelos', '#ff9a3d', true);
-    },
-    /** Para grabar vídeos: cámara lenta (0,5 = mitad de velocidad). */
-    debugSpeed(k) { if (k > 1) tampered = true; speedK = k; },
-    togglePause, cycleWatch,
-    /** El compañero al que miras estando caído (o null). */
-    get watching() { return watched(); },
-    /** Abandona la partida en curso (p. ej. al cerrar sesión desde Ajustes). */
-    quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
-    /** Para grabar vídeos: abre las cartas de subir de nivel. */
-    debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
-    toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
-    get state() { return state; }, get player() { return pl; }, st
+  hasResume() { return !!readResumeState(); },
+  resumeRun() {
+    if (!restoreResumeState()) G.UI.toast('No hay ninguna run guardada para continuar', 2600);
+  },
+  /** Para pruebas: salta el reloj de la run. */
+  debugTime(t) { tampered = true; time = t; },
+  /** Halloween: caramelos de golpe (al llegar al gran Gengar; en grupo, los da el anfitrión a todos). */
+  addCandy(n) {
+    if (!pl || !(n > 0)) return;
+    pl.candy = (pl.candy || 0) + n;
+    bankTickets();
+    G.FX.dmgText(pl.x, pl.y - pl.bodyH - 14, '+' + n + ' caramelos', '#ff9a3d', true);
+  },
+  /** Para grabar vídeos: cámara lenta (0,5 = mitad de velocidad). */
+  debugSpeed(k) { if (k > 1) tampered = true; speedK = k; },
+  togglePause, cycleWatch,
+  /** El compañero al que miras estando caído (o null). */
+  get watching() { return watched(); },
+  /** Abandona la partida en curso (p. ej. al cerrar sesión desde Ajustes). */
+  quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
+  /** Para grabar vídeos: abre las cartas de subir de nivel. */
+  debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
+  toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
+  get state() { return state; }, get player() { return pl; }, st
   };
 })();
 

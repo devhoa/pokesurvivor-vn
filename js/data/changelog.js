@@ -6,6 +6,10 @@
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-11-01', title: ['Continuar la última run', 'Resume the last run'], new: [
+    ['Si sales de la mazmorra sin terminar, el juego guarda la última run y puedes volver a ella desde el menú principal.',
+     'If you leave the dungeon before finishing, the game now saves the last run and lets you return to it from the main menu.']
+  ]},
   { d: '2026-11-01', title: ['Relé de juego más estable', 'More stable gameplay relay'], fix: [
     ['Se ajustó el relé de la base de datos para mantener el juego con vida sin saturar la conexión: los compañeros ya no quedan "congelados" ni dejan de recibir XP cuando necesitan el canal alternativo.',
      'The database relay was tuned to keep the game alive without saturating the connection: teammates no longer appear frozen or stop receiving XP when they need the fallback channel.']

@@ -33,6 +33,18 @@ G.Pickups = (() => {
 
   function clear() { list = []; }
   function all() { return list; }
+  function snapshot() {
+    return list.map(p => ({
+      id: p.id, kind: p.kind, x: p.x, y: p.y, value: p.value,
+      vx: p.vx, vy: p.vy, t: p.t, pulled: !!p.pulled
+    }));
+  }
+  function loadSnapshot(items) {
+    list = (items || []).map(p => ({
+      id: p.id, kind: p.kind, x: p.x, y: p.y, value: p.value,
+      vx: p.vx, vy: p.vy, t: p.t, pulled: !!p.pulled
+    }));
+  }
 
   function push(o) {
     // En cooperativo sólo el anfitrión crea objetos (las copias llegan por la red).

@@ -14,6 +14,29 @@ G.Projectiles = (() => {
 
   function clear() { list = []; }
   function all() { return list; }
+  function snapshot() {
+    return list.map(p => ({
+      id: p.id, x: p.x, y: p.y, px: p.px, py: p.py, vx: p.vx, vy: p.vy,
+      dmg: p.dmg, r: p.r, life: p.life, t: p.t, pierce: p.pierce, friendly: !!p.friendly,
+      color: p.color, homing: p.homing, slow: p.slow, burn: p.burn, poison: p.poison, knock: p.knock,
+      orb: !!p.orb, rehit: p.rehit, owner: p.owner && p.owner.id ? p.owner.id : p.owner || null,
+      oa: p.oa, ospeed: p.ospeed, orad: p.orad, back: !!p.back, boom: p.boom, bsp: p.bsp,
+      phits: p.phits ? [...p.phits] : null, hitLog: p.hitLog ? Array.from(p.hitLog.entries()) : null,
+      vis: p.vis || null, trailT: p.trailT || 0, ghost: !!p.ghost
+    }));
+  }
+  function loadSnapshot(items) {
+    clear();
+    for (const p of (items || [])) {
+      const q = Object.assign({ id: nextId++, x: 0, y: 0, vx: 0, vy: 0, dmg: 10, r: 6, life: 1.4, t: 0,
+        pierce: 0, hits: null, friendly: true, color: '#fff', homing: 0, slow: 0, burn: 0, poison: 0, knock: 0,
+        orb: false, rehit: 0.34, hitLog: null, phits: null }, p);
+      if (q.friendly && !q.orb && !q.phits) q.phits = new Set();
+      if (q.hitLog && Array.isArray(q.hitLog)) q.hitLog = new Map(q.hitLog);
+      list.push(q);
+    }
+    if (list.length) nextId = Math.max(...list.map(p => p.id || 0)) + 1;
+  }
 
   /** Proyectil del jugador. */
   function spawn(o) {

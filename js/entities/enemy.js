@@ -848,6 +848,54 @@
     const byId = new Map();
     function clear() { list = []; corpses = []; grid.clear(); byId.clear(); }
     function all() { return list; }
+    function snapshot() {
+      return list.filter(e => !e.dead && !e.remote).map(e => ({
+        id: e.id, dex: e.dex, name: e.name, x: e.x, y: e.y, boss: !!e.boss,
+        hp: e.hp, maxHp: e.maxHp, spd: e.spd, dmg: e.dmg, xp: e.xp,
+        behavior: e.behavior, types: e.types || [], atkType: e.atkType || (e.types && e.types[0]) || 'normal',
+        flying: !!e.flying, flash: e.flash || 0, slow: e.slow || 0, slowT: e.slowT || 0,
+        burn: e.burn || 0, burnT: e.burnT || 0, poison: e.poison || 0, poisonT: e.poisonT || 0,
+        lavaTick: e.lavaTick || 0, kx: e.kx || 0, ky: e.ky || 0, touchCd: e.touchCd || 0,
+        fade: e.fade || 0, phase: e.phase || 'walk', pt: e.pt || 0, dx: e.dx || 0, dy: e.dy || 0,
+        shotCd: e.shotCd || 0, stuckT: e.stuckT || 0, sideT: e.sideT || 0, side: e.side || 1,
+        bob: e.bob || 0, shiny: !!e.shiny, sparkT: e.sparkT || 0, shield: e.shield || 0, shieldT: e.shieldT || 0,
+        rd: e.rd || 0, skillCd: e.skillCd || 0, jump: e.jump ? { sx: e.jump.sx, sy: e.jump.sy, tx: e.jump.tx, ty: e.jump.ty, t: e.jump.t, dur: e.jump.dur } : null,
+        lagT: e.lagT || 0, golden: !!e.golden, arceus: !!e.arceus, stunT: e.stunT || 0, sleepT: e.sleepT || 0
+      }));
+    }
+    function loadSnapshot(items) {
+      const saved = Array.isArray(items) ? items : [];
+      const existing = list.slice();
+      clear();
+      for (const o of saved) {
+        const def = { dex: o.dex || o.def && o.def.dex || 1, hp: Number(o.maxHp || o.hp || 1), spd: Number(o.spd || 1), dmg: Number(o.dmg || 1), xp: Number(o.xp || 0), behavior: o.behavior || 'wild' };
+        const e = new Enemy(def, Number(o.x || 0), Number(o.y || 0), { hp: 1, spd: 1, dmg: 1 }, !!o.boss);
+        e.id = Number(o.id) || nextId++;
+        nextId = Math.max(nextId, e.id + 1);
+        e.name = o.name || e.name;
+        e.hp = Number(o.hp ?? o.maxHp ?? 1) || 1;
+        e.maxHp = Number(o.maxHp ?? o.hp ?? e.hp) || e.hp;
+        e.spd = Number(o.spd || e.spd || 1);
+        e.dmg = Number(o.dmg || e.dmg || 1);
+        e.xp = Number(o.xp || e.xp || 0);
+        e.behavior = o.behavior || e.behavior;
+        e.types = Array.isArray(o.types) && o.types.length ? o.types : (e.types || ['normal']);
+        e.atkType = o.atkType || e.atkType || e.types[0];
+        e.flying = !!o.flying;
+        e.flash = Number(o.flash || 0);
+        e.slow = Number(o.slow || 0); e.slowT = Number(o.slowT || 0);
+        e.burn = Number(o.burn || 0); e.burnT = Number(o.burnT || 0); e.poison = Number(o.poison || 0); e.poisonT = Number(o.poisonT || 0);
+        e.lavaTick = Number(o.lavaTick || 0); e.kx = Number(o.kx || 0); e.ky = Number(o.ky || 0); e.touchCd = Number(o.touchCd || 0);
+        e.dead = !!o.dead; e.fade = Number(o.fade || 0); e.phase = o.phase || e.phase; e.pt = Number(o.pt || 0); e.dx = Number(o.dx || 0); e.dy = Number(o.dy || 0);
+        e.shotCd = Number(o.shotCd || 0); e.stuckT = Number(o.stuckT || 0); e.sideT = Number(o.sideT || 0); e.side = Number(o.side || 1);
+        e.bob = Number(o.bob || 0); e.shiny = !!o.shiny; e.sparkT = Number(o.sparkT || 0); e.shield = Number(o.shield || 0); e.shieldT = Number(o.shieldT || 0);
+        e.rd = Number(o.rd || 0); e.skillCd = Number(o.skillCd || 0); e.jump = o.jump ? { ...o.jump } : null; e.lagT = Number(o.lagT || 0);
+        e.golden = !!o.golden; e.arceus = !!o.arceus; e.stunT = Number(o.stunT || 0); e.sleepT = Number(o.sleepT || 0);
+        if (e.shiny) e.makeShiny();
+        add(e);
+      }
+      if (!saved.length && existing.length) { list = existing; }
+    }
     function add(e) {
       list.push(e);
       byId.set(e.id, e);
