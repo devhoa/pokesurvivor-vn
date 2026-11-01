@@ -9720,6 +9720,10 @@ G.Funding = {
  * Cada línea en español y en inglés.
  */
 G.CHANGELOG = [
+  { d: '2026-11-01', title: ['Continuar la última run', 'Resume the last run'], new: [
+    ['Si sales de la mazmorra sin terminar, el juego guarda la última run y puedes volver a ella desde el menú principal.',
+     'If you leave the dungeon before finishing, the game now saves the last run and lets you return to it from the main menu.']
+  ]},
   { d: '2026-11-01', title: ['Relé de juego más estable', 'More stable gameplay relay'], fix: [
     ['Se ajustó el relé de la base de datos para mantener el juego con vida sin saturar la conexión: los compañeros ya no quedan "congelados" ni dejan de recibir XP cuando necesitan el canal alternativo.',
      'The database relay was tuned to keep the game alive without saturating the connection: teammates no longer appear frozen or stop receiving XP when they need the fallback channel.']
@@ -11546,6 +11550,7 @@ G.World = (() => {
     TS, CW, MENU_SEED, reset, setBiome, biomeName, drawNight, liquidKind, liquidEffect, walkable,
     kindAt, isWall, isLiquid, isFree, collide, projectileBlock, propsInCircle, nearestBreakable,
     damageProp, breakAt, specialsNear, update,
+    get seed() { return seed; },
     breakProp(p) { if (!broken.has(p.tx + ',' + p.ty)) destroyProp(p); },
     /** Arena de la grieta: { tx, ty, r } (en tiles) o null. */
     setArena(a) {
@@ -12296,6 +12301,29 @@ G.Projectiles = (() => {
 
   function clear() { list = []; }
   function all() { return list; }
+  function snapshot() {
+    return list.map(p => ({
+      id: p.id, x: p.x, y: p.y, px: p.px, py: p.py, vx: p.vx, vy: p.vy,
+      dmg: p.dmg, r: p.r, life: p.life, t: p.t, pierce: p.pierce, friendly: !!p.friendly,
+      color: p.color, homing: p.homing, slow: p.slow, burn: p.burn, poison: p.poison, knock: p.knock,
+      orb: !!p.orb, rehit: p.rehit, owner: p.owner && p.owner.id ? p.owner.id : p.owner || null,
+      oa: p.oa, ospeed: p.ospeed, orad: p.orad, back: !!p.back, boom: p.boom, bsp: p.bsp,
+      phits: p.phits ? [...p.phits] : null, hitLog: p.hitLog ? Array.from(p.hitLog.entries()) : null,
+      vis: p.vis || null, trailT: p.trailT || 0, ghost: !!p.ghost
+    }));
+  }
+  function loadSnapshot(items) {
+    clear();
+    for (const p of (items || [])) {
+      const q = Object.assign({ id: nextId++, x: 0, y: 0, vx: 0, vy: 0, dmg: 10, r: 6, life: 1.4, t: 0,
+        pierce: 0, hits: null, friendly: true, color: '#fff', homing: 0, slow: 0, burn: 0, poison: 0, knock: 0,
+        orb: false, rehit: 0.34, hitLog: null, phits: null }, p);
+      if (q.friendly && !q.orb && !q.phits) q.phits = new Set();
+      if (q.hitLog && Array.isArray(q.hitLog)) q.hitLog = new Map(q.hitLog);
+      list.push(q);
+    }
+    if (list.length) nextId = Math.max(...list.map(p => p.id || 0)) + 1;
+  }
 
   /** Proyectil del jugador. */
   function spawn(o) {
@@ -13273,6 +13301,54 @@ G.Projectiles = (() => {
     const byId = new Map();
     function clear() { list = []; corpses = []; grid.clear(); byId.clear(); }
     function all() { return list; }
+    function snapshot() {
+      return list.filter(e => !e.dead && !e.remote).map(e => ({
+        id: e.id, dex: e.dex, name: e.name, x: e.x, y: e.y, boss: !!e.boss,
+        hp: e.hp, maxHp: e.maxHp, spd: e.spd, dmg: e.dmg, xp: e.xp,
+        behavior: e.behavior, types: e.types || [], atkType: e.atkType || (e.types && e.types[0]) || 'normal',
+        flying: !!e.flying, flash: e.flash || 0, slow: e.slow || 0, slowT: e.slowT || 0,
+        burn: e.burn || 0, burnT: e.burnT || 0, poison: e.poison || 0, poisonT: e.poisonT || 0,
+        lavaTick: e.lavaTick || 0, kx: e.kx || 0, ky: e.ky || 0, touchCd: e.touchCd || 0,
+        fade: e.fade || 0, phase: e.phase || 'walk', pt: e.pt || 0, dx: e.dx || 0, dy: e.dy || 0,
+        shotCd: e.shotCd || 0, stuckT: e.stuckT || 0, sideT: e.sideT || 0, side: e.side || 1,
+        bob: e.bob || 0, shiny: !!e.shiny, sparkT: e.sparkT || 0, shield: e.shield || 0, shieldT: e.shieldT || 0,
+        rd: e.rd || 0, skillCd: e.skillCd || 0, jump: e.jump ? { sx: e.jump.sx, sy: e.jump.sy, tx: e.jump.tx, ty: e.jump.ty, t: e.jump.t, dur: e.jump.dur } : null,
+        lagT: e.lagT || 0, golden: !!e.golden, arceus: !!e.arceus, stunT: e.stunT || 0, sleepT: e.sleepT || 0
+      }));
+    }
+    function loadSnapshot(items) {
+      const saved = Array.isArray(items) ? items : [];
+      const existing = list.slice();
+      clear();
+      for (const o of saved) {
+        const def = { dex: o.dex || o.def && o.def.dex || 1, hp: Number(o.maxHp || o.hp || 1), spd: Number(o.spd || 1), dmg: Number(o.dmg || 1), xp: Number(o.xp || 0), behavior: o.behavior || 'wild' };
+        const e = new Enemy(def, Number(o.x || 0), Number(o.y || 0), { hp: 1, spd: 1, dmg: 1 }, !!o.boss);
+        e.id = Number(o.id) || nextId++;
+        nextId = Math.max(nextId, e.id + 1);
+        e.name = o.name || e.name;
+        e.hp = Number(o.hp ?? o.maxHp ?? 1) || 1;
+        e.maxHp = Number(o.maxHp ?? o.hp ?? e.hp) || e.hp;
+        e.spd = Number(o.spd || e.spd || 1);
+        e.dmg = Number(o.dmg || e.dmg || 1);
+        e.xp = Number(o.xp || e.xp || 0);
+        e.behavior = o.behavior || e.behavior;
+        e.types = Array.isArray(o.types) && o.types.length ? o.types : (e.types || ['normal']);
+        e.atkType = o.atkType || e.atkType || e.types[0];
+        e.flying = !!o.flying;
+        e.flash = Number(o.flash || 0);
+        e.slow = Number(o.slow || 0); e.slowT = Number(o.slowT || 0);
+        e.burn = Number(o.burn || 0); e.burnT = Number(o.burnT || 0); e.poison = Number(o.poison || 0); e.poisonT = Number(o.poisonT || 0);
+        e.lavaTick = Number(o.lavaTick || 0); e.kx = Number(o.kx || 0); e.ky = Number(o.ky || 0); e.touchCd = Number(o.touchCd || 0);
+        e.dead = !!o.dead; e.fade = Number(o.fade || 0); e.phase = o.phase || e.phase; e.pt = Number(o.pt || 0); e.dx = Number(o.dx || 0); e.dy = Number(o.dy || 0);
+        e.shotCd = Number(o.shotCd || 0); e.stuckT = Number(o.stuckT || 0); e.sideT = Number(o.sideT || 0); e.side = Number(o.side || 1);
+        e.bob = Number(o.bob || 0); e.shiny = !!o.shiny; e.sparkT = Number(o.sparkT || 0); e.shield = Number(o.shield || 0); e.shieldT = Number(o.shieldT || 0);
+        e.rd = Number(o.rd || 0); e.skillCd = Number(o.skillCd || 0); e.jump = o.jump ? { ...o.jump } : null; e.lagT = Number(o.lagT || 0);
+        e.golden = !!o.golden; e.arceus = !!o.arceus; e.stunT = Number(o.stunT || 0); e.sleepT = Number(o.sleepT || 0);
+        if (e.shiny) e.makeShiny();
+        add(e);
+      }
+      if (!saved.length && existing.length) { list = existing; }
+    }
     function add(e) {
       list.push(e);
       byId.set(e.id, e);
@@ -13538,6 +13614,18 @@ G.Pickups = (() => {
 
   function clear() { list = []; }
   function all() { return list; }
+  function snapshot() {
+    return list.map(p => ({
+      id: p.id, kind: p.kind, x: p.x, y: p.y, value: p.value,
+      vx: p.vx, vy: p.vy, t: p.t, pulled: !!p.pulled
+    }));
+  }
+  function loadSnapshot(items) {
+    list = (items || []).map(p => ({
+      id: p.id, kind: p.kind, x: p.x, y: p.y, value: p.value,
+      vx: p.vx, vy: p.vy, t: p.t, pulled: !!p.pulled
+    }));
+  }
 
   function push(o) {
     // En cooperativo sólo el anfitrión crea objetos (las copias llegan por la red).
@@ -23060,13 +23148,14 @@ G.MenuUI = (() => {
   const SORTS = [['num', 'Nº'], ['name', 'Nombre'], ['rar', 'Rareza'], ['new', 'Recién conseguidos'], ['used', 'Más usados']];
 
   function init() {
-    const ICON = { play: 'ball', dex: 'book', upgrades: 'up', shop: 'shop', bag: 'bag', gacha: 'ball4', goals: 'medal3', friends: 'friends', rank: 'trophy', settings: 'gear' };
+    const ICON = { play: 'ball', resume: 'play', dex: 'book', upgrades: 'up', shop: 'shop', bag: 'bag', gacha: 'ball4', goals: 'medal3', friends: 'friends', rank: 'trophy', settings: 'gear' };
     document.querySelectorAll('#scr-menu [data-go]').forEach(b => {
       b.insertAdjacentHTML('afterbegin', `<span class="mi-ico">${G.Icons.html(ICON[b.dataset.go], 26)}</span>`);
       b.dataset.sfx = b.dataset.go === 'play' ? 'confirm' : 'click';
       b.onclick = () => {
         const go = b.dataset.go;
         if (go === 'play') { if (G.Social.room) G.LobbyUI.open(); else G.Flow.play(); }
+        else if (go === 'resume') G.Game.resumeRun();
         else if (go === 'dex') openDex();
         else if (go === 'upgrades') openUpgrades();
         else if (go === 'shop') G.ShopUI.open();
@@ -23095,6 +23184,8 @@ G.MenuUI = (() => {
     const shiny = !!s.partnerShiny && G.DB.ownsShiny(mon.dex);
     G.UI.chrome(true);
     G.UI.show('scr-menu');
+    const resume = document.getElementById('menu-continue');
+    if (resume) resume.classList.toggle('hidden', !G.Game.hasResume());
     bagLine();
     hwLine();
     G.UI.sprite($('menu-partner'), mon.dex, { lively: true, scale: 4, hero: true, shiny, skin: G.Skins.worn(s, mon.dex) });
@@ -26946,6 +27037,7 @@ G.Game = (() => {
     if (window.visualViewport) visualViewport.addEventListener('resize', resizeSoon);
     if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(cv);
     G.Touch.init(cv);
+    addEventListener('beforeunload', () => { if (state !== 'ui' && pl) saveResumeState(); });
     // En móvil: al cambiar de app o girarlo en vertical, la partida se pausa.
     document.addEventListener('visibilitychange', () => { if (document.hidden) autoPause(); });
     // En el móvil, bajar la cortina de avisos o abrir otra app por encima a veces
@@ -27130,9 +27222,178 @@ G.Game = (() => {
     state = 'playing';
   }
 
+  const RESUME_KEY = 'ps.resume.run';
+  function readResumeState() {
+    try { return JSON.parse(localStorage.getItem(RESUME_KEY) || 'null'); }
+    catch (e) { return null; }
+  }
+  function writeResumeState(v) {
+    try { localStorage.setItem(RESUME_KEY, JSON.stringify(v)); }
+    catch (e) { /* nada */ }
+  }
+  function clearResumeState() {
+    try { localStorage.removeItem(RESUME_KEY); }
+    catch (e) { /* nada */ }
+  }
+  function isFiniteNum(v) { return typeof v === 'number' && Number.isFinite(v); }
+  function isStableRunState() {
+    if (!pl || !G.DB.save || !G.DB.save.partner) return false;
+    if (G.Rift && (G.Rift.inArena || (G.Rift.rift && G.Rift.rift.ttl > 0))) return false;
+    if (G.Judgment && G.Judgment.active) return false;
+    if (!isFiniteNum(pl.x) || !isFiniteNum(pl.y) || !isFiniteNum(pl.hp) || !isFiniteNum(pl.maxHp)) return false;
+    const hasBoss = G.EnemyMgr && G.EnemyMgr.all ? G.EnemyMgr.all().some(e => !e.dead && (e.boss || e.legend || e.arceus)) : false;
+    return !hasBoss;
+  }
+  function validateResumeSnapshot(snap) {
+    if (!snap || !snap.player || !snap.world || !snap.world.biome && snap.world.biome !== 0) return false;
+    if (!isFiniteNum(snap.player.x) || !isFiniteNum(snap.player.y) || !isFiniteNum(snap.player.hp) || !isFiniteNum(snap.player.maxHp)) return false;
+    if ((snap.scene && (snap.scene.arena || snap.scene.rift || snap.scene.judgment)) || (Array.isArray(snap.bossState) && snap.bossState.length)) return false;
+    const enemies = Array.isArray(snap.enemies) ? snap.enemies : [];
+    for (const e of enemies) {
+      if (!isFiniteNum(e.x) || !isFiniteNum(e.y) || !isFiniteNum(e.hp) || !isFiniteNum(e.maxHp)) return false;
+      if ((e.boss || e.legend || e.arceus) && !(e.dead === true || !e.dead)) return false;
+      if ((e.boss || e.legend || e.arceus) && Number(e.hp) <= 0) return false;
+    }
+    if (Array.isArray(snap.projectiles)) {
+      for (const p of snap.projectiles) {
+        if (!isFiniteNum(p.x) || !isFiniteNum(p.y) || !isFiniteNum(p.vx) || !isFiniteNum(p.vy)) return false;
+      }
+    }
+    return true;
+  }
+  function saveResumeState() {
+    if (!pl || !G.DB.save || !G.DB.save.partner) return;
+    if (!isStableRunState()) {
+      clearResumeState();
+      return;
+    }
+    const scene = {
+      biome,
+      arena: G.Rift && G.Rift.arena ? {
+        tx: G.Rift.arena.tx, ty: G.Rift.arena.ty, r: G.Rift.arena.r, dex: G.Rift.arena.dex,
+        shiny: !!G.Rift.arena.shiny, x: G.Rift.arena.x, y: G.Rift.arena.y, t: G.Rift.arena.t
+      } : null,
+      rift: G.Rift && G.Rift.rift ? { x: G.Rift.rift.x, y: G.Rift.rift.y, ttl: G.Rift.rift.ttl, t: G.Rift.rift.t } : null,
+      judgment: G.Judgment && G.Judgment.active ? { phase: G.Judgment.phase || 'fight', t: G.Judgment.t || 0 } : null
+    };
+    const bossState = G.EnemyMgr && G.EnemyMgr.all ? G.EnemyMgr.all().filter(e => (e.boss || e.legend || e.arceus) && !e.dead).map(e => ({
+      id: e.id, dex: e.dex, x: e.x, y: e.y, hp: e.hp, maxHp: e.maxHp, boss: !!e.boss, legend: !!e.legend, arceus: !!e.arceus,
+      shiny: !!e.shiny, phase: e.phase || 'walk', t: e.t || 0, shield: e.shield || 0, stunT: e.stunT || 0
+    })) : [];
+    const snap = {
+      savedAt: Date.now(),
+      time,
+      world: {
+        seed: Number(G.World.seed || 0),
+        biome: Number(biome || 0)
+      },
+      partner: G.DB.save.partner,
+      partnerShiny: !!G.DB.save.partnerShiny,
+      item: pl.item || null,
+      player: {
+        x: pl.x,
+        y: pl.y,
+        moveAngle: pl.moveAngle,
+        aim: pl.aim,
+        dead: !!pl.dead,
+        walking: !!pl.walking,
+        hp: pl.hp,
+        maxHp: pl.maxHp,
+        invuln: pl.invuln || 0,
+        slowT: pl.slowT || 0
+      },
+      level: pl.level,
+      xp: pl.xp,
+      xpNext: pl.xpNext,
+      kills: pl.kills,
+      bosses: pl.bosses,
+      coins: pl.coins,
+      t1: pl.t1,
+      t10: pl.t10,
+      candy: pl.candy || 0,
+      bind: Object.assign({}, pl.bind || {}),
+      banned: Array.from(pl.banned || []),
+      active: pl.active || 0,
+      moves: pl.moves.map(m => ({ id: m.id, lvl: m.lvl, dealt: m.dealt || 0, since: m.since || 0, evolved: !!m.evolved })),
+      slots: pl.slots.map(group => group.map(m => m.id)),
+      enemies: G.EnemyMgr.snapshot ? G.EnemyMgr.snapshot() : [],
+      projectiles: G.Projectiles.snapshot ? G.Projectiles.snapshot() : [],
+      pickups: G.Pickups.snapshot ? G.Pickups.snapshot() : [],
+      scene,
+      bossState
+    };
+    if (!validateResumeSnapshot(snap)) {
+      clearResumeState();
+      return;
+    }
+    writeResumeState(snap);
+  }
+  function restoreResumeState() {
+    const snap = readResumeState();
+    if (!snap || !G.DB.save || !G.DB.save.partner) return false;
+    if (!validateResumeSnapshot(snap)) {
+      clearResumeState();
+      G.UI.toast('No se puede continuar con una run inestable o con arena/boss activo', 2600);
+      return false;
+    }
+    startRun();
+    if (!pl) return false;
+    const save = G.DB.save;
+    const seed = Number((snap.world && snap.world.seed) || 0) || Math.floor(Math.random() * 1e6);
+    const biomeIndex = Number((snap.world && snap.world.biome) || 0) || 0;
+    G.World.reset(seed);
+    G.World.setBiome(Math.max(0, biomeIndex), true);
+    biome = biomeIndex;
+    time = Number(snap.time || 0) || 0;
+    pl.level = Number(snap.level || pl.level) || pl.level;
+    pl.xp = Number(snap.xp || 0) || pl.xp;
+    pl.xpNext = Number(snap.xpNext || pl.xpNext) || pl.xpNext;
+    pl.kills = Number(snap.kills || 0) || pl.kills;
+    pl.bosses = Number(snap.bosses || 0) || pl.bosses;
+    pl.coins = Number(snap.coins || 0) || pl.coins;
+    pl.t1 = Number(snap.t1 || 0) || pl.t1;
+    pl.t10 = Number(snap.t10 || 0) || pl.t10;
+    pl.candy = Number(snap.candy || 0) || pl.candy;
+    pl.hp = Number((snap.player && snap.player.hp) || pl.maxHp) || pl.maxHp;
+    pl.maxHp = Number((snap.player && snap.player.maxHp) || pl.maxHp) || pl.maxHp;
+    pl.bind = Object.assign({}, snap.bind || {});
+    pl.banned = new Set(Array.isArray(snap.banned) ? snap.banned : []);
+    pl.item = snap.item || null;
+    pl.moveAngle = Number((snap.player && snap.player.moveAngle) || 0) || 0;
+    pl.aim = Number((snap.player && snap.player.aim) || Math.PI / 2) || Math.PI / 2;
+    pl.x = Number((snap.player && snap.player.x) || pl.x) || pl.x;
+    pl.y = Number((snap.player && snap.player.y) || pl.y) || pl.y;
+    pl.dead = !!(snap.player && snap.player.dead);
+    pl.walking = !!(snap.player && snap.player.walking);
+    pl.invuln = Number((snap.player && snap.player.invuln) || 0) || 0;
+    pl.slowT = Number((snap.player && snap.player.slowT) || 0) || 0;
+    pl.moves = (snap.moves || []).map(m => {
+      const move = G.Moves.instance(m.id, Number(m.lvl) || 1);
+      move.dealt = Number(m.dealt) || 0;
+      move.since = Number(m.since) || 0;
+      move.evolved = !!m.evolved;
+      return move;
+    });
+    const loadedSlots = Array.isArray(snap.slots) && snap.slots.length ? snap.slots : [pl.moves.map(m => m.id)];
+    pl.slots = loadedSlots.map(slot => slot.map(id => pl.moves.find(m => m.id === id)).filter(Boolean));
+    if (!pl.slots.length) pl.slots = [pl.moves.slice()];
+    pl.active = Math.min(Math.max(Number(snap.active) || 0, 0), Math.max(pl.slots.length - 1, 0));
+    pl.hp = Math.min(pl.hp, pl.maxHp);
+    G.Camera.x = pl.x; G.Camera.y = pl.y; G.Camera.shake = 0;
+    if (G.EnemyMgr.loadSnapshot) G.EnemyMgr.loadSnapshot(snap.enemies || []);
+    if (G.Projectiles.loadSnapshot) G.Projectiles.loadSnapshot(snap.projectiles || []);
+    if (G.Pickups.loadSnapshot) G.Pickups.loadSnapshot(snap.pickups || []);
+    state = 'playing';
+    save.partner = save.partner || snap.partner;
+    save.partnerShiny = !!snap.partnerShiny;
+    clearResumeState();
+    G.UI.toast('Continuando la última run guardada', 2600);
+    return true;
+  }
   function quitRun() {
     if (G.Coop.active) G.Coop.leave();
-    endRun(false);
+    saveResumeState();
+    endRun(false, true);
   }
 
   /** Todos los jugadores de la partida (tú primero). */
@@ -27291,7 +27552,7 @@ G.Game = (() => {
     if (!wasOwned) irisSay(e.dex);
   };
 
-  function endRun(dead = true) {
+  function endRun(dead = true, preserveResume = false) {
     if (state === 'over' || !pl) return;
     const coop = !!pl.uid;                    // sólo las partidas en grupo le ponen uid
     const wasHost = !!pl.coopHost;
@@ -27336,6 +27597,7 @@ G.Game = (() => {
     G.Progress.checkAch();
     // Se guarda en este aparato; a la nube sube al pulsar Guardar (ver db.js).
     G.DB.commit('run');
+    if (!preserveResume) clearResumeState();
     if (G.Social.me) G.Social.publishProfile();
 
     // Ranking: en solitario cada uno lo suyo; en grupo lo sube el anfitrión.
@@ -27961,26 +28223,30 @@ G.Game = (() => {
 
   return {
     init, startRun, everyone, levelXp, flash, offerBond,
-    /** Para pruebas: salta el reloj de la run. */
-    debugTime(t) { tampered = true; time = t; },
-    /** Halloween: caramelos de golpe (al llegar al gran Gengar; en grupo, los da el anfitrión a todos). */
-    addCandy(n) {
-      if (!pl || !(n > 0)) return;
-      pl.candy = (pl.candy || 0) + n;
-      bankTickets();
-      G.FX.dmgText(pl.x, pl.y - pl.bodyH - 14, '+' + n + ' caramelos', '#ff9a3d', true);
-    },
-    /** Para grabar vídeos: cámara lenta (0,5 = mitad de velocidad). */
-    debugSpeed(k) { if (k > 1) tampered = true; speedK = k; },
-    togglePause, cycleWatch,
-    /** El compañero al que miras estando caído (o null). */
-    get watching() { return watched(); },
-    /** Abandona la partida en curso (p. ej. al cerrar sesión desde Ajustes). */
-    quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
-    /** Para grabar vídeos: abre las cartas de subir de nivel. */
-    debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
-    toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
-    get state() { return state; }, get player() { return pl; }, st
+  hasResume() { return !!readResumeState(); },
+  resumeRun() {
+    if (!restoreResumeState()) G.UI.toast('No hay ninguna run guardada para continuar', 2600);
+  },
+  /** Para pruebas: salta el reloj de la run. */
+  debugTime(t) { tampered = true; time = t; },
+  /** Halloween: caramelos de golpe (al llegar al gran Gengar; en grupo, los da el anfitrión a todos). */
+  addCandy(n) {
+    if (!pl || !(n > 0)) return;
+    pl.candy = (pl.candy || 0) + n;
+    bankTickets();
+    G.FX.dmgText(pl.x, pl.y - pl.bodyH - 14, '+' + n + ' caramelos', '#ff9a3d', true);
+  },
+  /** Para grabar vídeos: cámara lenta (0,5 = mitad de velocidad). */
+  debugSpeed(k) { if (k > 1) tampered = true; speedK = k; },
+  togglePause, cycleWatch,
+  /** El compañero al que miras estando caído (o null). */
+  get watching() { return watched(); },
+  /** Abandona la partida en curso (p. ej. al cerrar sesión desde Ajustes). */
+  quit() { if (state !== 'ui' && state !== 'over') quitRun(); },
+  /** Para grabar vídeos: abre las cartas de subir de nivel. */
+  debugLevelUp() { tampered = true; pl.level++; pendingLevels++; },
+  toUI() { state = 'ui'; if (cv) cv.style.cursor = ''; Backdrop.restore(); },
+  get state() { return state; }, get player() { return pl; }, st
   };
 })();
 
